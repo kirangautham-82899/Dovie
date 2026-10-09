@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { FOCUS_AREAS, type FocusAreaId } from "@/lib/focus-areas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,8 @@ export default function TodayPage() {
 }
 
 async function TodayContent() {
+  // The date and per-user data must be computed per request, not prerendered.
+  await connection();
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
