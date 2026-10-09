@@ -3,11 +3,13 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { FOCUS_AREAS, type FocusAreaId } from "@/lib/focus-areas";
+import { TasksSection } from "@/features/tasks/tasks-section";
+import { todayInTimezone } from "@/lib/dates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Cards shown for each focus area the user picked during onboarding.
 const SECTIONS: Record<FocusAreaId, string[]> = {
-  tasks: ["Top 3 priorities", "To-dos"],
+  tasks: [],
   habits: ["Habits"],
   fitness: ["Fitness goal"],
   money: ["Bills due"],
@@ -46,6 +48,7 @@ async function TodayContent() {
 
   return (
     <TodayShell title={firstName ? `Hi, ${firstName}` : "Today"} subtitle={date}>
+      {areas.includes("tasks") && <TasksSection today={todayInTimezone(profile.timezone)} />}
       {cards.map((title) => (
         <Card key={title}>
           <CardHeader>
