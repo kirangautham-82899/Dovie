@@ -1,19 +1,15 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { connection } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getProfileAndToday } from "@/lib/profile";
 import { FOCUS_AREAS, type FocusAreaId } from "@/lib/focus-areas";
 import { TasksSection } from "@/features/tasks/tasks-section";
-import { todayInTimezone } from "@/lib/dates";
+import { HabitsToday } from "@/features/habits/habits-today";
+import { FitnessToday } from "@/features/fitness/fitness-today";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Cards shown for each focus area the user picked during onboarding.
-const SECTIONS: Record<FocusAreaId, string[]> = {
-  tasks: [],
-  habits: ["Habits"],
-  fitness: ["Fitness goal"],
-  money: ["Bills due"],
-  journal: ["Journal"],
+// Placeholder cards for areas that are not built yet.
+const PLACEHOLDERS: Partial<Record<FocusAreaId, string>> = {
+  money: "Bills due",
+  journal: "Journal",
 };
 
 export default function TodayPage() {
@@ -25,15 +21,7 @@ export default function TodayPage() {
 }
 
 async function TodayContent() {
-  // The date and per-user data must be computed per request, not prerendered.
-  await connection();
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, focus_areas, timezone, onboarded_at")
-    .single();
-
-  if (!profile?.onboarded_at) redirect("/onboarding");
+  const { profile, today } = await getProfileAndToday();
 
   const firstName = profile.display_name?.trim().split(/\s+/)[0];
   const date = new Date().toLocaleDateString("en-IN", {
@@ -44,19 +32,23 @@ async function TodayContent() {
   });
 
   const areas = FOCUS_AREAS.map((a) => a.id).filter((id) => profile.focus_areas.includes(id));
-  const cards = areas.flatMap((id) => SECTIONS[id]);
 
   return (
     <TodayShell title={firstName ? `Hi, ${firstName}` : "Today"} subtitle={date}>
-      {areas.includes("tasks") && <TasksSection today={todayInTimezone(profile.timezone)} />}
-      {cards.map((title) => (
-        <Card key={title}>
-          <CardHeader>
-            <CardTitle className="text-base">{title}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">Coming soon</CardContent>
-        </Card>
-      ))}
+      {areas.includes("tasks") && <TasksSection today={today} />}
+      {areas.includes("habits") && <HabitsToday today={today} />}
+      {areas.includes("fitness") && <FitnessToday today={today} />}
+      {areas.map((id) => {
+        const title = PLACEHOLDERS[id];
+        return title ? (
+          <Card key={id}>
+            <CardHeader>
+              <CardTitle className="text-base">{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">Coming soon</CardContent>
+          </Card>
+        ) : null;
+      })}
     </TodayShell>
   );
 }
