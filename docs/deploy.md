@@ -61,6 +61,7 @@ people to `/auth/callback`, which signs them in and sends them to onboarding.
    | `NEXT_PUBLIC_SUPABASE_URL` | `https://lvzbonyyvieaylwqwukv.supabase.co` |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the publishable (anon) key from **Supabase > Project Settings > API Keys** |
    | `NEXT_PUBLIC_SITE_URL` | optional; your custom domain (e.g. `https://dovie.app`) for canonical URLs, the sitemap and share cards. Without it, Vercel's production URL is used. |
+   | `GEMINI_API_KEY` | optional; enables **Ask Dovie** using Google Gemini (from aistudio.google.com). Takes priority over Claude when set. Server-only. |
    | `ANTHROPIC_API_KEY` | optional; enables **Ask Dovie** on the Money forecast. Create one at console.anthropic.com. Server-only, so never prefix it with `NEXT_PUBLIC_`. |
 
    Do **not** add the service-role key; the app never needs it. Account deletion runs through the

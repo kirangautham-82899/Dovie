@@ -1,11 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import { ApiError, GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 // Shared server path for the "Ask Dovie" insights. Each route supplies the
 // schema for what the browser may send (numbers and labels only) and a system
-// prompt; this handles auth, limits, the Claude call and every failure mode.
+// prompt; this handles auth, limits, the model call (Gemini or Claude) and
+// every failure mode.
 
 export const Insight = z.object({
   headline: z.string().describe("One warm sentence that sums up the picture."),
@@ -43,11 +45,17 @@ export async function insightResponse<T>(request: Request, input: z.ZodType<T>, 
   const parsed = input.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail("That summary looks incomplete.", 400);
 
-  // On Vercel the key comes from the project's environment variables.
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
-    return fail("AI insights aren't set up yet (missing ANTHROPIC_API_KEY).", 503);
+  // On Vercel the keys come from the project's environment variables.
+  // Gemini is used when GEMINI_API_KEY is set; otherwise Claude.
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey && !process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
+    return fail("AI insights aren't set up yet (add GEMINI_API_KEY or ANTHROPIC_API_KEY).", 503);
   }
   if (!allow(userId)) return fail("That's a lot of questions for one hour. Try again a little later.", 429);
+
+  const instructions = `${system}\n\n${SHARED_RULES}`;
+  const payload = JSON.stringify(parsed.data);
+  if (geminiKey) return askGemini(geminiKey, instructions, payload);
 
   try {
     const client = new Anthropic();
@@ -59,8 +67,8 @@ export async function insightResponse<T>(request: Request, input: z.ZodType<T>, 
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
       output_config: { effort: "low", format: betaZodOutputFormat(Insight) },
-      system: `${system}\n\n${SHARED_RULES}`,
-      messages: [{ role: "user", content: JSON.stringify(parsed.data) }],
+      system: instructions,
+      messages: [{ role: "user", content: payload }],
     });
 
     if (response.stop_reason === "refusal" || !response.parsed_output) {
@@ -73,6 +81,45 @@ export async function insightResponse<T>(request: Request, input: z.ZodType<T>, 
     }
     if (error instanceof Anthropic.RateLimitError) return fail("Dovie is a little busy. Try again in a minute.", 429);
     if (error instanceof Anthropic.APIError) return fail("Dovie couldn't reach its AI right now.", 502);
+    throw error;
+  }
+}
+
+// Gemini's structured output takes plain JSON Schema; "$schema" isn't one of
+// the keywords it accepts, so it is dropped.
+const INSIGHT_JSON_SCHEMA: Record<string, unknown> = { ...z.toJSONSchema(Insight) };
+delete INSIGHT_JSON_SCHEMA.$schema;
+
+async function askGemini(apiKey: string, instructions: string, payload: string): Promise<Response> {
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: process.env.GEMINI_MODEL ?? "gemini-flash-latest",
+      contents: payload,
+      config: {
+        systemInstruction: instructions,
+        responseMimeType: "application/json",
+        responseJsonSchema: INSIGHT_JSON_SCHEMA,
+      },
+    });
+    // No text means the answer was blocked or empty; malformed JSON is treated the same.
+    let json: unknown = null;
+    try {
+      json = JSON.parse(response.text ?? "null");
+    } catch {
+      json = null;
+    }
+    const insight = Insight.safeParse(json);
+    if (!insight.success) return fail("Dovie couldn't read this just now. Please try again.", 502);
+    return Response.json(insight.data satisfies Insight);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      if (error.status === 400 || error.status === 401 || error.status === 403) {
+        return fail("AI insights aren't set up correctly (check GEMINI_API_KEY).", 503);
+      }
+      if (error.status === 429) return fail("Dovie is a little busy. Try again in a minute.", 429);
+      return fail("Dovie couldn't reach its AI right now.", 502);
+    }
     throw error;
   }
 }

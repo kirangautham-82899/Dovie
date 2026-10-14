@@ -24,7 +24,7 @@ A gentle daily planner, habit tracker, budget app and private journal, in one ca
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white" />
   <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Postgres_+_Auth-3FCF8E?logo=supabase&logoColor=white" />
   <img alt="Vercel" src="https://img.shields.io/badge/Deployed_on-Vercel-000000?logo=vercel&logoColor=white" />
-  <img alt="Claude" src="https://img.shields.io/badge/AI-Claude-D97757?logo=anthropic&logoColor=white" />
+  <img alt="AI" src="https://img.shields.io/badge/AI-Gemini_%7C_Claude-8E75B2?logo=googlegemini&logoColor=white" />
 </p>
 
 </div>
@@ -83,7 +83,7 @@ Dovie's predictions run **in the browser on your own entries**: free, instant an
 - **Budgets and savings:** each category is projected against its limit (*on track · getting close · likely over*), and each savings goal gets an estimated finish date.
 - **Next week:** a recency-weighted trend over four weeks for plans, habits, sleep, focus, movement and mood, plus your strongest weekday, the effect of sleep and a suggested daily plan load.
 
-**Ask Dovie** (optional) turns those numbers into a short, warm read using Claude. It sends **totals and labels only, never notes or journal text**, and runs behind sign-in, input validation and an hourly limit.
+**Ask Dovie** (optional) turns those numbers into a short, warm read using Gemini or Claude, whichever key is configured. It sends **totals and labels only, never notes or journal text**, and runs behind sign-in, input validation and an hourly limit.
 
 ---
 
@@ -106,7 +106,7 @@ flowchart LR
     U[Browser<br/>Next.js client] -->|RLS-protected queries| S[(Supabase<br/>Postgres + Auth)]
     U -->|encrypts journal locally| U
     U -->|totals only| A["/api/insights<br/>Vercel function"]
-    A -->|structured output| C[Claude API]
+    A -->|structured output| C[Gemini or Claude]
     P[proxy.ts<br/>local JWT check] --> U
     S -->|scores · streaks · weekly review<br/>bill roll-over · account deletion| S
 ```
@@ -132,7 +132,7 @@ flowchart LR
 | Data | TanStack Query 5 (persisted cache) · Supabase JS + SSR |
 | Backend | Supabase Postgres with RLS, SQL functions and triggers · Supabase Auth (email + Google) |
 | Charts | Recharts (lazy-loaded) |
-| AI | Anthropic SDK · Claude with structured outputs (optional) |
+| AI | Google Gen AI SDK (Gemini) or Anthropic SDK (Claude), with structured JSON output (optional) |
 | Hosting | Vercel |
 
 ---
@@ -166,6 +166,7 @@ Copy `apps/web/.env.example` to `apps/web/.env` and fill it in:
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase → Project Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase → Project Settings → API Keys (publishable key) |
+| `GEMINI_API_KEY` | optional | [aistudio.google.com](https://aistudio.google.com/apikey). Enables **Ask Dovie** with Gemini (used first when set). Server-only. |
 | `ANTHROPIC_API_KEY` | optional | [console.anthropic.com](https://console.anthropic.com). Enables **Ask Dovie**. Server-only. |
 | `NEXT_PUBLIC_SITE_URL` | optional | Your custom domain, for canonical URLs and share cards |
 
