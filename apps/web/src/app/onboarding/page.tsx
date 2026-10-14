@@ -47,17 +47,19 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase
-      .from("profiles")
-      .select("id,display_name,is_adult_confirmed,onboarded_at")
-      .single()
-      .then(({ data }) => {
-        if (!data) return;
-        if (data.onboarded_at) return router.replace("/today");
-        setUserId(data.id);
-        setName(data.display_name ?? "");
-        setAdult(data.is_adult_confirmed);
-      });
+    Promise.all([
+      supabase.from("profiles").select("id,display_name,is_adult_confirmed,onboarded_at").single(),
+      supabase.auth.getSession(),
+    ]).then(([{ data }, { data: auth }]) => {
+      if (!data) return;
+      if (data.onboarded_at) return router.replace("/today");
+      // Email sign-ups store display_name; Google sign-ins bring full_name/name instead.
+      const meta = auth.session?.user.user_metadata ?? {};
+      const fallback = String(meta.full_name ?? meta.name ?? "").slice(0, 60);
+      setUserId(data.id);
+      setName(data.display_name ?? fallback);
+      setAdult(data.is_adult_confirmed);
+    });
   }, [router]);
 
   function toggle(id: FocusAreaId) {
