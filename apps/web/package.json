@@ -14,7 +14,8 @@
     "test:life": "node --env-file=.env scripts/life-test.mjs",
     "test:crypto": "node --no-warnings scripts/crypto-test.mjs",
     "test:forecast": "node --no-warnings scripts/forecast-test.mjs",
-    "test:predict": "node --no-warnings scripts/predict-test.mjs"
+    "test:predict": "node --no-warnings scripts/predict-test.mjs",
+    "icons": "node --no-warnings scripts/generate-favicons.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
