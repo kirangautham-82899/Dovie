@@ -4,8 +4,10 @@
 
 const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
+// `||`, not `??`: an empty NEXT_PUBLIC_SITE_URL= line must fall back too,
+// otherwise new URL("") crashes every page.
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? (vercel ? `https://${vercel}` : "http://localhost:3000")
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() || (vercel ? `https://${vercel}` : "http://localhost:3000")
 ).replace(/\/$/, "");
 
 export const SITE_NAME = "Dovie";
