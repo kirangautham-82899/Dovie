@@ -90,9 +90,11 @@ export async function insightResponse<T>(request: Request, input: z.ZodType<T>, 
 const INSIGHT_JSON_SCHEMA: Record<string, unknown> = { ...z.toJSONSchema(Insight) };
 delete INSIGHT_JSON_SCHEMA.$schema;
 
-// Tried in order: the configured model, then a stable fallback in case the
-// first is unavailable to this key or overloaded.
-const GEMINI_FALLBACK = "gemini-2.5-flash";
+// Tried in order: the configured model, then fallbacks for when it is
+// overloaded (Google returns 503 "high demand") or unavailable. Only the
+// "-latest" aliases are used, because Google retires pinned versions
+// (gemini-2.5-flash now returns 404); Flash-Lite usually has spare capacity.
+const GEMINI_FALLBACKS = ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // Logs Google's status and message (never the key) so failures can be
@@ -103,7 +105,7 @@ function logGemini(model: string, what: string) {
 
 async function askGemini(apiKey: string, instructions: string, payload: string): Promise<Response> {
   const ai = new GoogleGenAI({ apiKey });
-  const models = [...new Set([process.env.GEMINI_MODEL ?? "gemini-flash-latest", GEMINI_FALLBACK])];
+  const models = [...new Set([process.env.GEMINI_MODEL ?? GEMINI_FALLBACKS[0], ...GEMINI_FALLBACKS])];
   let rateLimited = false;
 
   for (const model of models) {
@@ -138,7 +140,7 @@ async function askGemini(apiKey: string, instructions: string, payload: string):
         }
         if (status === 429) rateLimited = true;
         if ((status >= 500 || status === 0) && attempt === 1) {
-          await sleep(800);
+          await sleep(1500);
           continue; // retry the same model once
         }
         break; // 404 (model unavailable), 429 or a repeated failure: next model
