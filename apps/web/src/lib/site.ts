@@ -4,11 +4,26 @@
 
 const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
-// `||`, not `??`: an empty NEXT_PUBLIC_SITE_URL= line must fall back too,
-// otherwise new URL("") crashes every page.
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL?.trim() || (vercel ? `https://${vercel}` : "http://localhost:3000")
-).replace(/\/$/, "");
+/** A full http(s) address, or null for empty or malformed values. */
+function validUrl(value: string | undefined): string | null {
+  const v = value?.trim();
+  if (!v) return null;
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+const configured = process.env.NEXT_PUBLIC_SITE_URL;
+if (configured?.trim() && !validUrl(configured)) {
+  // A wrong value (e.g. a project ID) would otherwise crash every page.
+  console.warn(`NEXT_PUBLIC_SITE_URL must be a full URL like https://dovie.app; ignoring "${configured}".`);
+}
+
+export const SITE_URL =
+  validUrl(configured) ?? (vercel ? `https://${vercel}` : "http://localhost:3000");
 
 export const SITE_NAME = "Dovie";
 
