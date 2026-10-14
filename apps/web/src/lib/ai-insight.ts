@@ -90,36 +90,61 @@ export async function insightResponse<T>(request: Request, input: z.ZodType<T>, 
 const INSIGHT_JSON_SCHEMA: Record<string, unknown> = { ...z.toJSONSchema(Insight) };
 delete INSIGHT_JSON_SCHEMA.$schema;
 
+// Tried in order: the configured model, then a stable fallback in case the
+// first is unavailable to this key or overloaded.
+const GEMINI_FALLBACK = "gemini-2.5-flash";
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Logs Google's status and message (never the key) so failures can be
+// diagnosed from the Vercel runtime logs.
+function logGemini(model: string, what: string) {
+  console.error(`[ask-dovie] gemini ${model}: ${what.slice(0, 300)}`);
+}
+
 async function askGemini(apiKey: string, instructions: string, payload: string): Promise<Response> {
-  try {
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL ?? "gemini-flash-latest",
-      contents: payload,
-      config: {
-        systemInstruction: instructions,
-        responseMimeType: "application/json",
-        responseJsonSchema: INSIGHT_JSON_SCHEMA,
-      },
-    });
-    // No text means the answer was blocked or empty; malformed JSON is treated the same.
-    let json: unknown = null;
-    try {
-      json = JSON.parse(response.text ?? "null");
-    } catch {
-      json = null;
-    }
-    const insight = Insight.safeParse(json);
-    if (!insight.success) return fail("Dovie couldn't read this just now. Please try again.", 502);
-    return Response.json(insight.data satisfies Insight);
-  } catch (error) {
-    if (error instanceof ApiError) {
-      if (error.status === 400 || error.status === 401 || error.status === 403) {
-        return fail("AI insights aren't set up correctly (check GEMINI_API_KEY).", 503);
+  const ai = new GoogleGenAI({ apiKey });
+  const models = [...new Set([process.env.GEMINI_MODEL ?? "gemini-flash-latest", GEMINI_FALLBACK])];
+  let rateLimited = false;
+
+  for (const model of models) {
+    // Two attempts per model: Google's "overloaded" errors are usually brief.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: payload,
+          config: {
+            systemInstruction: instructions,
+            responseMimeType: "application/json",
+            responseJsonSchema: INSIGHT_JSON_SCHEMA,
+          },
+        });
+        // No text means the answer was blocked or empty; malformed JSON is treated the same.
+        let json: unknown = null;
+        try {
+          json = JSON.parse(response.text ?? "null");
+        } catch {
+          json = null;
+        }
+        const insight = Insight.safeParse(json);
+        if (insight.success) return Response.json(insight.data satisfies Insight);
+        logGemini(model, `unusable reply (finish: ${response.candidates?.[0]?.finishReason ?? "none"})`);
+        break; // try the next model
+      } catch (error) {
+        const status = error instanceof ApiError ? error.status : 0;
+        logGemini(model, `${status || "network"} ${error instanceof Error ? error.message : String(error)}`);
+        if (status === 400 || status === 401 || status === 403) {
+          return fail("AI insights aren't set up correctly (check GEMINI_API_KEY).", 503);
+        }
+        if (status === 429) rateLimited = true;
+        if ((status >= 500 || status === 0) && attempt === 1) {
+          await sleep(800);
+          continue; // retry the same model once
+        }
+        break; // 404 (model unavailable), 429 or a repeated failure: next model
       }
-      if (error.status === 429) return fail("Dovie is a little busy. Try again in a minute.", 429);
-      return fail("Dovie couldn't reach its AI right now.", 502);
     }
-    throw error;
   }
+  if (rateLimited) return fail("Dovie is a little busy. Try again in a minute.", 429);
+  return fail("Dovie couldn't reach its AI right now.", 502);
 }
