@@ -1,21 +1,18 @@
-import { SignOutButton } from "@/components/sign-out-button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader, PageShell } from "@/components/page-header";
+import { SettingsScreen } from "@/features/settings/settings-screen";
+
+export const metadata = { title: "Settings" };
 
 export default function SettingsPage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-8">
-      <h1 className="text-2xl font-semibold">Settings</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Account</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SignOutButton />
-        </CardContent>
-      </Card>
-      <p className="text-xs text-muted-foreground">
-        Reminders, data export and account deletion are coming in a later step.
-      </p>
-    </main>
+    <PageShell>
+      <PageHeader
+        eyebrow="your space"
+        title="Your space,"
+        accent="your way."
+        subtitle="Small settings for a space that belongs to you. This is yours to adjust as your life changes."
+      />
+      <SettingsScreen />
+    </PageShell>
   );
 }

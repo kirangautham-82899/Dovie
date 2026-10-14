@@ -4,10 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { clearAppCache } from "@/lib/app-cache";
+import { AuthShell, GoogleButton } from "@/components/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field } from "@/components/field";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -16,76 +18,79 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [isAdult, setIsAdult] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!isAdult) return setError("You must be 18 or older to use Dovie.");
+    if (!isAdult) return setError("Dovie is currently for adults, 18 and over.");
     setLoading(true);
     setError(null);
+    clearAppCache();
     const { data, error } = await createClient().auth.signUp({
       email,
       password,
-      options: { data: { display_name: name, is_adult_confirmed: true } },
+      options: {
+        data: { display_name: name, is_adult_confirmed: true },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     setLoading(false);
     if (error) return setError(error.message);
     if (!data.session) {
-      return setError("Check your email to confirm your account, then sign in.");
+      return setNotice("Check your email for a confirmation link. It will bring you straight back here.");
     }
-    router.replace("/");
+    router.replace("/onboarding");
     router.refresh();
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-sm items-center px-4">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Join Dovie</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="flex flex-col gap-3">
-            <Input
-              placeholder="Your name"
-              autoComplete="name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <Input
-              type="email"
-              placeholder="Email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+    <AuthShell
+      title="Make a little space"
+      subtitle="One little win at a time."
+      switchTo={{ prompt: "Already have an account?", label: "Sign in", href: "/login" }}
+    >
+      <GoogleButton />
+      {notice ? (
+        <p className="border-l-2 border-primary py-1 pl-3 text-sm">{notice}</p>
+      ) : (
+        <form onSubmit={onSubmit} className="flex flex-col gap-3.5">
+          <Field label="Your name">
+            <Input autoComplete="name" required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
+          </Field>
+          <Field label="Email address">
+            <Input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          </Field>
+          <Field label="Password" hint="At least 8 characters.">
             <Input
               type="password"
-              placeholder="Password (min 8 characters)"
               autoComplete="new-password"
               minLength={8}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={isAdult} onCheckedChange={(v) => setIsAdult(v === true)} />
-              I am 18 years or older
-            </label>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating account..." : "Create account"}
-            </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link href="/login" className="underline">
-                Sign in
+          </Field>
+          <label className="flex items-start gap-2 text-sm">
+            <Checkbox className="mt-0.5" checked={isAdult} onCheckedChange={(v) => setIsAdult(v === true)} />
+            <span>
+              I am 18 or older and agree to the{" "}
+              <Link href="/terms" className="underline">
+                terms
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="underline">
+                privacy notice
               </Link>
-            </p>
-          </form>
-        </CardContent>
-      </Card>
-    </main>
+              .
+            </span>
+          </label>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <Button type="submit" size="lg" disabled={loading}>
+            {loading ? "Making space…" : "Continue"}
+          </Button>
+        </form>
+      )}
+    </AuthShell>
   );
 }

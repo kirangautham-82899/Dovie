@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dovie web
 
-## Getting Started
+A gentle daily companion: plans, habits, movement, wellness, money, an encrypted journal, a weekly
+calendar and a weekly review. Next.js (App Router) + Supabase, deployed on Vercel.
 
-First, run the development server:
+## Run locally
+
+```bash
+npm install
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy `.env.example` to `.env` and fill in your Supabase URL and publishable (anon) key first. The database
+schema lives in `../../supabase/migrations`; see [`../../docs/deploy.md`](../../docs/deploy.md) for applying it
+and for production setup.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Layout
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Path | What it is |
+|---|---|
+| `src/app/page.tsx` | Public landing page |
+| `src/app/(app)/*` | Signed-in screens: today, goals, money, journal, wellness, calendar, weekly, settings |
+| `src/app/auth/callback` | Google sign-in and email confirmation return here |
+| `src/features/*` | One folder per feature: `api.ts` (Supabase calls), hooks, components |
+| `src/features/journal/crypto.ts` | Journal encryption, implementing `docs/crypto-spec.md` |
+| `src/proxy.ts` | Session refresh and signed-in/signed-out redirects |
 
-## Learn More
+Logic that must be consistent across clients (scores, streaks, bill roll-over, the weekly review,
+account deletion) lives in Postgres functions, so the future Flutter app can reuse it.
 
-To learn more about Next.js, take a look at the following resources:
+## Checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run build
+```
 
-## Deploy on Vercel
+```bash
+npm run test:crypto
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`test:rls`, `test:tasks`, `test:habits`, `test:checkin` and `test:life` run against your Supabase project
+and need email confirmation turned off while they run.

@@ -14,11 +14,18 @@ function fail(error: { message: string }): never {
   throw new Error(error.message);
 }
 
-/** Moves unfinished overdue tasks to today, then returns today's tasks. */
+// Carry-over only has work to do once per day, so it runs on the first tasks
+// load of each day instead of in front of every fetch.
+let carriedOn: string | null = null;
+
+/** Moves unfinished overdue tasks to today (once a day), then returns today's tasks. */
 export async function fetchTodayTasks(today: string): Promise<Task[]> {
   const supabase = createClient();
-  const carried = await supabase.rpc("carry_over_tasks");
-  if (carried.error) fail(carried.error);
+  if (carriedOn !== today) {
+    const carried = await supabase.rpc("carry_over_tasks");
+    if (carried.error) fail(carried.error);
+    carriedOn = today;
+  }
 
   const { data, error } = await supabase
     .from("tasks")

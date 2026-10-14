@@ -142,7 +142,7 @@ export function HabitsManager({ today }: { today: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Habits</CardTitle>
+        <CardTitle>Habits</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <form onSubmit={submit} className="flex gap-2">

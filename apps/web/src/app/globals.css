@@ -7,9 +7,27 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, monospace;
+  --font-heading: var(--font-serif);
+  --color-sky: var(--sky);
+  --color-sky-foreground: var(--sky-foreground);
+  --color-butter: var(--butter);
+  --color-butter-foreground: var(--butter-foreground);
+  --color-lilac: var(--lilac);
+  --color-lilac-foreground: var(--lilac-foreground);
+  --color-mint: var(--mint);
+  --color-mint-foreground: var(--mint-foreground);
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 11s ease-in-out infinite;
+  --animate-rise: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-orbit: orbit 70s linear infinite;
+  --animate-orbit-reverse: orbit 70s linear infinite reverse;
+  --animate-orbit-fast: orbit 38s linear infinite reverse;
+  --animate-halo: halo 3.6s ease-out infinite;
+  --animate-fade-swap: fade-swap 0.6s ease-out both;
+  --shadow-soft: var(--soft-shadow);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,73 +67,95 @@
 }
 
 :root {
-  /* Dovie palette: sage, cream and dusty rose */
-  --background: oklch(0.97 0.018 90);          /* cream */
-  --foreground: oklch(0.29 0.025 150);         /* deep forest brown */
-  --card: oklch(0.99 0.01 90);
-  --card-foreground: oklch(0.29 0.025 150);
-  --popover: oklch(0.99 0.01 90);
-  --popover-foreground: oklch(0.29 0.025 150);
-  --primary: oklch(0.53 0.065 150);            /* sage */
-  --primary-foreground: oklch(0.985 0.01 90);
-  --secondary: oklch(0.925 0.03 140);          /* pale sage */
-  --secondary-foreground: oklch(0.33 0.04 150);
-  --muted: oklch(0.945 0.018 90);
-  --muted-foreground: oklch(0.5 0.025 130);
-  --accent: oklch(0.91 0.045 25);              /* dusty rose */
-  --accent-foreground: oklch(0.38 0.05 20);
-  --destructive: oklch(0.55 0.15 30);
-  --border: oklch(0.89 0.02 95);
-  --input: oklch(0.89 0.02 95);
-  --ring: oklch(0.62 0.07 150);
-  --chart-1: oklch(0.62 0.07 150);
-  --chart-2: oklch(0.75 0.07 25);
-  --chart-3: oklch(0.8 0.08 85);
-  --chart-4: oklch(0.7 0.05 220);
-  --chart-5: oklch(0.6 0.06 320);
+  /* Dovie palette: Korean pastels. Blush, rose, peach, lavender, baby blue and mint. */
+  --background: hsl(340 50% 97.5%);
+  --foreground: hsl(335 28% 20%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(335 28% 20%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(335 28% 20%);
+  --primary: hsl(343 74% 61%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(345 85% 95%);
+  --secondary-foreground: hsl(343 52% 38%);
+  --muted: hsl(340 40% 95%);
+  --muted-foreground: hsl(335 12% 46%);
+  --accent: hsl(18 92% 93%);
+  --accent-foreground: hsl(14 52% 38%);
+  --sky: hsl(212 85% 94%);
+  --sky-foreground: hsl(218 42% 36%);
+  --butter: hsl(44 95% 91%);
+  --butter-foreground: hsl(32 52% 32%);
+  --lilac: hsl(266 78% 95%);
+  --lilac-foreground: hsl(266 32% 40%);
+  --mint: hsl(156 55% 92%);
+  --mint-foreground: hsl(160 38% 28%);
+  --destructive: hsl(355 70% 52%);
+  --border: hsl(340 42% 91%);
+  --input: hsl(340 35% 88%);
+  --ring: hsl(343 74% 61%);
+  --chart-1: hsl(343 74% 64%);
+  --chart-2: hsl(18 85% 72%);
+  --chart-3: hsl(266 55% 72%);
+  --chart-4: hsl(212 70% 70%);
+  --chart-5: hsl(156 42% 58%);
   --radius: 1rem;
-  --sidebar: oklch(0.99 0.01 90);
-  --sidebar-foreground: oklch(0.29 0.025 150);
-  --sidebar-primary: oklch(0.53 0.065 150);
-  --sidebar-primary-foreground: oklch(0.985 0.01 90);
-  --sidebar-accent: oklch(0.925 0.03 140);
-  --sidebar-accent-foreground: oklch(0.33 0.04 150);
-  --sidebar-border: oklch(0.89 0.02 95);
-  --sidebar-ring: oklch(0.62 0.07 150);
+  --soft-shadow: 0 1px 2px hsl(340 40% 40% / 0.04), 0 8px 24px -8px hsl(340 60% 55% / 0.14);
+  --sidebar: hsl(0 0% 100% / 0.7);
+  --sidebar-foreground: hsl(335 28% 22%);
+  --sidebar-primary: hsl(343 74% 61%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(345 85% 95%);
+  --sidebar-accent-foreground: hsl(343 52% 38%);
+  --sidebar-border: hsl(340 42% 91%);
+  --sidebar-ring: hsl(343 74% 61%);
+  --blush-gradient: linear-gradient(135deg, hsl(345 90% 94%) 0%, hsl(300 70% 95%) 45%, hsl(18 95% 93%) 100%);
+  --rose-gradient: linear-gradient(135deg, hsl(343 78% 62%) 0%, hsl(325 70% 68%) 55%, hsl(12 88% 72%) 100%);
 }
 
 .dark {
-  --background: oklch(0.22 0.015 150);
-  --foreground: oklch(0.94 0.02 90);
-  --card: oklch(0.27 0.02 150);
-  --card-foreground: oklch(0.94 0.02 90);
-  --popover: oklch(0.27 0.02 150);
-  --popover-foreground: oklch(0.94 0.02 90);
-  --primary: oklch(0.75 0.08 150);
-  --primary-foreground: oklch(0.22 0.02 150);
-  --secondary: oklch(0.33 0.03 150);
-  --secondary-foreground: oklch(0.94 0.02 90);
-  --muted: oklch(0.3 0.02 150);
-  --muted-foreground: oklch(0.72 0.02 110);
-  --accent: oklch(0.38 0.04 20);
-  --accent-foreground: oklch(0.94 0.02 90);
-  --destructive: oklch(0.7 0.14 30);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.65 0.07 150);
-  --chart-1: oklch(0.75 0.08 150);
-  --chart-2: oklch(0.78 0.08 25);
-  --chart-3: oklch(0.82 0.08 85);
-  --chart-4: oklch(0.72 0.06 220);
-  --chart-5: oklch(0.7 0.07 320);
-  --sidebar: oklch(0.27 0.02 150);
-  --sidebar-foreground: oklch(0.94 0.02 90);
-  --sidebar-primary: oklch(0.75 0.08 150);
-  --sidebar-primary-foreground: oklch(0.22 0.02 150);
-  --sidebar-accent: oklch(0.33 0.03 150);
-  --sidebar-accent-foreground: oklch(0.94 0.02 90);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.65 0.07 150);
+  --background: hsl(330 22% 9%);
+  --foreground: hsl(340 35% 94%);
+  --card: hsl(330 18% 13%);
+  --card-foreground: hsl(340 35% 94%);
+  --popover: hsl(330 18% 13%);
+  --popover-foreground: hsl(340 35% 94%);
+  --primary: hsl(343 85% 72%);
+  --primary-foreground: hsl(330 30% 10%);
+  --secondary: hsl(338 30% 20%);
+  --secondary-foreground: hsl(343 80% 88%);
+  --muted: hsl(330 15% 18%);
+  --muted-foreground: hsl(335 14% 70%);
+  --accent: hsl(16 30% 20%);
+  --accent-foreground: hsl(20 80% 86%);
+  --sky: hsl(218 28% 20%);
+  --sky-foreground: hsl(212 80% 88%);
+  --butter: hsl(38 28% 19%);
+  --butter-foreground: hsl(44 85% 84%);
+  --lilac: hsl(266 24% 21%);
+  --lilac-foreground: hsl(266 75% 90%);
+  --mint: hsl(160 22% 18%);
+  --mint-foreground: hsl(156 55% 82%);
+  --destructive: hsl(355 75% 66%);
+  --border: hsl(330 15% 22%);
+  --input: hsl(330 15% 26%);
+  --ring: hsl(343 85% 72%);
+  --chart-1: hsl(343 85% 72%);
+  --chart-2: hsl(18 85% 72%);
+  --chart-3: hsl(266 60% 76%);
+  --chart-4: hsl(212 70% 72%);
+  --chart-5: hsl(156 45% 62%);
+  --soft-shadow: 0 1px 2px hsl(0 0% 0% / 0.3), 0 8px 24px -8px hsl(0 0% 0% / 0.5);
+  --sidebar: hsl(330 18% 11% / 0.8);
+  --sidebar-foreground: hsl(340 30% 90%);
+  --sidebar-primary: hsl(343 85% 72%);
+  --sidebar-primary-foreground: hsl(330 30% 10%);
+  --sidebar-accent: hsl(338 30% 20%);
+  --sidebar-accent-foreground: hsl(343 80% 88%);
+  --sidebar-border: hsl(330 15% 20%);
+  --sidebar-ring: hsl(343 85% 72%);
+  --blush-gradient: linear-gradient(135deg, hsl(338 32% 18%) 0%, hsl(290 22% 17%) 50%, hsl(16 28% 17%) 100%);
+  --rose-gradient: linear-gradient(135deg, hsl(343 75% 58%) 0%, hsl(325 60% 60%) 55%, hsl(12 75% 64%) 100%);
 }
 
 @layer base {
@@ -124,8 +164,83 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* A faint blush wash behind every page. */
+    background-image:
+      radial-gradient(60rem 30rem at 100% -10%, hsl(345 90% 92% / 0.55), transparent 60%),
+      radial-gradient(50rem 30rem at -10% 110%, hsl(266 80% 94% / 0.5), transparent 60%);
+    background-attachment: fixed;
+  }
+  .dark body {
+    background-image:
+      radial-gradient(60rem 30rem at 100% -10%, hsl(343 50% 25% / 0.35), transparent 60%),
+      radial-gradient(50rem 30rem at -10% 110%, hsl(266 40% 25% / 0.3), transparent 60%);
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer components {
+  /* Small uppercase label above a heading. */
+  .eyebrow {
+    @apply text-[0.66rem] font-bold tracking-[0.18em] text-primary uppercase;
+  }
+}
+
+@layer components {
+  /* A grid whose cells share hairline borders, like the landing feature grid.
+     The 1px gaps show the border colour through; cells are opaque. Stack
+     several sections inside one cell with divide-y. */
+  .ruled {
+    display: grid;
+    gap: 1px;
+    background-color: var(--border);
+    border: 1px solid var(--border);
+  }
+  .ruled > * {
+    min-width: 0;
+    background-color: var(--card);
+  }
+  .bg-blush {
+    background-image: var(--blush-gradient);
+  }
+  .text-rose {
+    background-image: var(--rose-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--tilt, 0deg)); }
+}
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes halo {
+  0% { transform: scale(0.85); opacity: 0.55; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes fade-swap {
+  from { opacity: 0; transform: translateY(6px); filter: blur(3px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes pop {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

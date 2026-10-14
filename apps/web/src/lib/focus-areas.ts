@@ -1,9 +1,10 @@
 export const FOCUS_AREAS = [
-  { id: "tasks", label: "Plan my day", hint: "Top priorities and to-dos" },
-  { id: "habits", label: "Build habits", hint: "Small daily streaks" },
-  { id: "fitness", label: "Move my body", hint: "One-tap fitness goals" },
-  { id: "money", label: "Mind my money", hint: "Bills, spending and budgets" },
-  { id: "journal", label: "Reflect", hint: "A private daily journal" },
+  { id: "tasks", label: "A day that fits", hint: "Top three, to-dos and a calendar" },
+  { id: "habits", label: "Small habits", hint: "Gentle daily rhythms" },
+  { id: "fitness", label: "Movement", hint: "Walks, stretches, one-tap logging" },
+  { id: "wellness", label: "Rest and care", hint: "Sleep, water, energy and focus" },
+  { id: "money", label: "Money, gently", hint: "Bills, spending and savings" },
+  { id: "journal", label: "A page for me", hint: "A private, encrypted journal" },
 ] as const;
 
 export type FocusAreaId = (typeof FOCUS_AREAS)[number]["id"];

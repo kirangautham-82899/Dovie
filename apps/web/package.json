@@ -9,14 +9,22 @@
     "lint": "eslint",
     "test:rls": "node --env-file=.env scripts/rls-test.mjs",
     "test:tasks": "node --env-file=.env scripts/tasks-test.mjs",
-    "test:habits": "node --env-file=.env scripts/habits-test.mjs"
+    "test:habits": "node --env-file=.env scripts/habits-test.mjs",
+    "test:checkin": "node --env-file=.env scripts/checkin-test.mjs",
+    "test:life": "node --env-file=.env scripts/life-test.mjs",
+    "test:crypto": "node --no-warnings scripts/crypto-test.mjs",
+    "test:forecast": "node --no-warnings scripts/forecast-test.mjs",
+    "test:predict": "node --no-warnings scripts/predict-test.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "@base-ui/react": "^1.8.0",
     "@hookform/resolvers": "^5.9.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",
+    "@tanstack/query-sync-storage-persister": "^5.104.1",
     "@tanstack/react-query": "^5.104.1",
+    "@tanstack/react-query-persist-client": "^5.104.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "lucide-react": "^1.53.0",

@@ -87,7 +87,7 @@ export function TasksSection({ today }: { today: string }) {
     <>
       <Card>
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle className="text-base">Top priorities</CardTitle>
+          <CardTitle>Your top three</CardTitle>
           <span className="text-xs text-muted-foreground">
             {priorities.length}/{MAX_PRIORITIES}
           </span>
@@ -95,7 +95,7 @@ export function TasksSection({ today }: { today: string }) {
         <CardContent>
           {priorities.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Tap the star on a task to make it one of today&apos;s top {MAX_PRIORITIES}.
+              Pick one small thing to make the day feel like yours. Tap the star on a plan to add it here.
             </p>
           ) : (
             <ul>{priorities.map(renderItem)}</ul>
@@ -105,7 +105,7 @@ export function TasksSection({ today }: { today: string }) {
 
       <Card>
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle className="text-base">To-dos</CardTitle>
+          <CardTitle>The rest of today</CardTitle>
           {tasks.length > 0 && (
             <span className="text-xs text-muted-foreground">
               {doneCount} of {tasks.length} done
@@ -116,7 +116,7 @@ export function TasksSection({ today }: { today: string }) {
           <form onSubmit={submit} className="flex gap-2">
             <Input
               aria-label="New task"
-              placeholder="Add a task"
+              placeholder="Add a small plan…"
               maxLength={MAX_TITLE_LENGTH}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -134,7 +134,7 @@ export function TasksSection({ today }: { today: string }) {
 
           {others.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {tasks.length === 0 ? "Nothing planned yet. Add your first task." : "No other tasks."}
+              {tasks.length === 0 ? "Nothing on the list yet. Add one small plan above." : "Nothing else on the list."}
             </p>
           ) : (
             <ul>{others.map(renderItem)}</ul>

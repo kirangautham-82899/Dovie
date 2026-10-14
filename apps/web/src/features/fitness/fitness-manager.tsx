@@ -104,7 +104,7 @@ export function FitnessManager({ today }: { today: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Fitness goals</CardTitle>
+        <CardTitle>Fitness goals</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-xs text-muted-foreground">

@@ -81,6 +81,11 @@ document: `{"body": "...", "gratitude": "..."}`.
 with it, and wrap a second copy with the recovery key. Store both wrapped copies and the salt.
 Show the recovery key once and make the user confirm they saved it.
 
+**Recovery key display:** the 32 raw bytes are shown as RFC 4648 base32 (alphabet `A-Z2-7`, no
+padding, 52 characters) split into dash-separated groups of 4. Parsing upper-cases the input and
+ignores spaces and dashes. (Base64url is not used for display because its `-` clashes with the
+group separator.)
+
 **Unlock:** fetch `journal_keys`, derive KEK, unwrap DEK. A GCM tag failure means a wrong
 passphrase. Keep the DEK in memory only, or in secure storage if the user enabled PIN/biometric unlock.
 

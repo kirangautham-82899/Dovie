@@ -116,7 +116,7 @@ export function FitnessToday({ today }: { today: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Fitness goal</CardTitle>
+        <CardTitle>Fitness goal</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {query.isPending && <p className="text-sm text-muted-foreground">Loading your goals...</p>}

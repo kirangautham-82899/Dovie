@@ -18,7 +18,7 @@ export function HabitsToday({ today }: { today: string }) {
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
-        <CardTitle className="text-base">Habits</CardTitle>
+        <CardTitle>Habits</CardTitle>
         {habits.length > 0 && (
           <span className="text-xs text-muted-foreground">
             {doneCount} of {habits.length} done
