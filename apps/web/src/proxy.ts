@@ -56,8 +56,9 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // Static assets and the public SEO files (robots, sitemap, share image,
-  // manifest) skip the proxy: they need no session, and crawlers must reach them.
+  // manifest, search engine verification files) skip the proxy: they need no
+  // session, and crawlers must reach them.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|opengraph-image|apple-icon|icons/|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|opengraph-image|apple-icon|icons/|manifest.webmanifest|google[0-9a-f]+\\.html|BingSiteAuth\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
