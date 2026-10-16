@@ -14,6 +14,8 @@ A gentle daily planner, habit tracker, budget app and private journal, in one ca
   &nbsp;·&nbsp;
   <a href="#-getting-started">Getting started</a>
   &nbsp;·&nbsp;
+  <a href="#-seo--search-engines">SEO</a>
+  &nbsp;·&nbsp;
   <a href="docs/deploy.md">Deploy guide</a>
 </p>
 
@@ -168,7 +170,8 @@ Copy `apps/web/.env.example` to `apps/web/.env` and fill it in:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase → Project Settings → API Keys (publishable key) |
 | `GEMINI_API_KEY` | optional | [aistudio.google.com](https://aistudio.google.com/apikey). Enables **Ask Dovie** with Gemini (used first when set). Server-only. |
 | `ANTHROPIC_API_KEY` | optional | [console.anthropic.com](https://console.anthropic.com). Enables **Ask Dovie**. Server-only. |
-| `NEXT_PUBLIC_SITE_URL` | optional | Your custom domain, for canonical URLs and share cards |
+| `NEXT_PUBLIC_SITE_URL` | optional | Your custom domain as a full URL (`https://…`), for canonical URLs and share cards |
+| `GOOGLE_SITE_VERIFICATION` / `BING_SITE_VERIFICATION` | optional | Search engine meta-tag codes (see [SEO](#-seo--search-engines)) |
 
 ### 3. Set up the database
 
@@ -213,6 +216,42 @@ The full checklist (migrations, auth redirect URLs, Google sign-in and environme
 
 ---
 
+## 🔎 SEO & search engines
+
+Dovie is registered with **Google Search Console** and **Bing Webmaster Tools**. Bing also feeds Edge, Yahoo, DuckDuckGo and Copilot.
+
+### What's built in
+
+| Piece | Where | Notes |
+|---|---|---|
+| Title, description, keywords, Open Graph, Twitter card | `src/app/layout.tsx`, `src/lib/site.ts` | Keyword-targeted copy (daily planner, habit tracker, expense tracker, budget planner, encrypted journal…) |
+| Share image | `src/app/opengraph-image.tsx` | Generated at build time with `next/og` |
+| Structured data | `src/app/page.tsx` | JSON-LD for the app (`SoftwareApplication`) and the FAQ |
+| `robots.txt` | `src/app/robots.ts` | Allows public pages; blocks the signed-in screens, `/api/` and `/auth/` |
+| `sitemap.xml` | `src/app/sitemap.ts` | Home, sign-up, sign-in, privacy, terms; regenerated on every deploy |
+| Canonical URL | `src/lib/site.ts` | `NEXT_PUBLIC_SITE_URL` if set, otherwise Vercel's production URL |
+| Favicons and app icons | `scripts/generate-favicons.mjs` (`npm run icons`), `src/lib/brand-icon.tsx` | |
+
+### Ownership verification
+
+| Engine | Method | File |
+|---|---|---|
+| Google Search Console | HTML file | `apps/web/public/googlef7f218449ee0b5a0.html` |
+| Bing Webmaster Tools | XML file | `apps/web/public/BingSiteAuth.xml` |
+
+> **Keep both files.** Google and Bing re-check them from time to time, and removing one drops the verification. `proxy.ts` lets them through without a sign-in, so crawlers can always reach them.
+
+Meta-tag verification also works: set `GOOGLE_SITE_VERIFICATION` and/or `BING_SITE_VERIFICATION` in Vercel to the tag's `content` value, then redeploy.
+
+### Adding a custom domain
+
+1. Connect the domain in Vercel (**Settings → Domains**).
+2. Set `NEXT_PUBLIC_SITE_URL` to the full URL (for example, `https://dovie.app`) and redeploy. Canonical URLs, the sitemap and share cards follow it.
+3. In Search Console, add the domain as a new property and submit `sitemap.xml`. Then use **Settings → Change of address** to move from the old URL.
+4. Add the domain in Bing Webmaster Tools too, or import it from Search Console.
+
+---
+
 ## 📁 Project structure
 
 ```text
@@ -239,6 +278,8 @@ The full checklist (migrations, auth redirect URLs, Google sign-in and environme
 - [x] Money: expenses, bills, budgets, savings goals and forecasts
 - [x] Encrypted journal with recovery key
 - [x] Wellness, calendar and weekly review with predictions
+- [x] SEO: sitemap, structured data, Google and Bing verified
+- [ ] Custom domain
 - [ ] Email bill reminders (Resend + `pg_cron`)
 - [ ] Installable offline PWA and web push
 - [ ] Flutter mobile app on the same backend
