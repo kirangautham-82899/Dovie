@@ -46,6 +46,12 @@ export const metadata: Metadata = {
   },
   appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
   formatDetection: { telephone: false },
+  // Ownership tags for Google Search Console and Bing Webmaster Tools (which
+  // also covers Edge). Set the codes in Vercel and redeploy; empty means no tag.
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+  },
 };
 
 export const viewport: Viewport = {
