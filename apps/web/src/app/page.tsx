@@ -198,7 +198,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-1">
             <Link
               href="/login"
-              className="hidden px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground sm:block"
+              className="px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
             >
               Sign in
             </Link>
