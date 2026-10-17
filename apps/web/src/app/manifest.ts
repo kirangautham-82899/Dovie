@@ -10,12 +10,13 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Dovie: daily planner, habits & money",
     short_name: "Dovie",
     description: SITE_DESCRIPTION,
-    start_url: "/today",
+    // Signed-out visitors land on the landing page; the proxy sends signed-in people on to /today.
+    start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#fdf3f6",
-    theme_color: "#e5567f",
+    background_color: "#fcf9f6",
+    theme_color: "#f4a9bd",
     categories: ["productivity", "lifestyle", "finance", "health"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

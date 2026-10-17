@@ -12,8 +12,10 @@ import { Field } from "@/components/field";
 export default function LoginPage() {
   return (
     <AuthShell
+      accent="sky"
       title="Welcome back"
-      subtitle="Come back to your little corner."
+      subtitle="Your corner kept your place for you."
+      signoff="Waiting for you, Dovie"
       switchTo={{ prompt: "New to Dovie?", label: "Make a little space", href: "/signup" }}
     >
       <GoogleButton />
@@ -60,7 +62,7 @@ function LoginForm() {
         />
       </Field>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" size="lg" disabled={loading}>
+      <Button type="submit" size="lg" loading={loading} className="mt-1">
         {loading ? "Signing in…" : "Continue"}
       </Button>
     </form>

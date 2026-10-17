@@ -13,6 +13,9 @@
   --font-heading: var(--font-serif);
   --color-sky: var(--sky);
   --color-sky-foreground: var(--sky-foreground);
+  --color-wash-1: var(--wash-1);
+  --color-wash-2: var(--wash-2);
+  --color-wash-3: var(--wash-3);
   --color-butter: var(--butter);
   --color-butter-foreground: var(--butter-foreground);
   --color-lilac: var(--lilac);
@@ -25,6 +28,8 @@
   --animate-orbit: orbit 70s linear infinite;
   --animate-orbit-reverse: orbit 70s linear infinite reverse;
   --animate-orbit-fast: orbit 38s linear infinite reverse;
+  --animate-sway: sway 6s ease-in-out infinite;
+  --animate-flap: flap 1.6s ease-in-out infinite;
   --animate-halo: halo 3.6s ease-out infinite;
   --animate-fade-swap: fade-swap 0.6s ease-out both;
   --shadow-soft: var(--soft-shadow);
@@ -66,20 +71,42 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Dovie palette: a neutral warm-white page with ONE pastel accent per page.
+   An accent is a handful of knobs; every accent-coloured token below is derived
+   from them. Set data-accent on a wrapper (or <html>) to change the page colour.
+     --hue   the accent        --hue2 / --hue3  companion washes
+     --ps    saturation        --pl   lightness of the primary
+     --ts    how strongly tints carry the hue */
 :root {
-  /* Dovie palette: Korean pastels. Blush, rose, peach, lavender, baby blue and mint. */
-  --background: hsl(340 50% 97.5%);
-  --foreground: hsl(335 28% 20%);
+  --hue: 343;
+  --hue2: 280;
+  --hue3: 18;
+  --ps: 66%;
+  --pl: 73%;
+  --ts: 1;
+}
+[data-accent="rose"] { --hue: 343; --hue2: 280; --hue3: 18; --ps: 66%; --pl: 73%; --ts: 1; }
+[data-accent="mint"] { --hue: 156; --hue2: 200; --hue3: 45; --ps: 36%; --pl: 66%; --ts: 0.6; }
+[data-accent="lilac"] { --hue: 266; --hue2: 330; --hue3: 200; --ps: 58%; --pl: 79%; --ts: 0.9; }
+[data-accent="sky"] { --hue: 212; --hue2: 266; --hue3: 160; --ps: 68%; --pl: 75%; --ts: 0.85; }
+[data-accent="butter"] { --hue: 42; --hue2: 18; --hue3: 156; --ps: 86%; --pl: 69%; --ts: 0.9; }
+[data-accent="peach"] { --hue: 18; --hue2: 343; --hue3: 44; --ps: 84%; --pl: 77%; --ts: 1; }
+
+:root, [data-accent] {
+  --ds: calc(0.5 + 0.5 * var(--ts));
+
+  --background: hsl(30 25% 98.3%);
+  --foreground: hsl(330 10% 19%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(335 28% 20%);
+  --card-foreground: var(--foreground);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(335 28% 20%);
-  --primary: hsl(343 74% 61%);
-  --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(345 85% 95%);
-  --secondary-foreground: hsl(343 52% 38%);
-  --muted: hsl(340 40% 95%);
-  --muted-foreground: hsl(335 12% 46%);
+  --popover-foreground: var(--foreground);
+  --primary: hsl(var(--hue) var(--ps) var(--pl));
+  --primary-foreground: hsl(var(--hue) 40% 16%);
+  --secondary: hsl(calc(var(--hue) + 2) calc(85% * var(--ts)) 95%);
+  --secondary-foreground: hsl(var(--hue) calc(var(--ps) * 0.7) 38%);
+  --muted: hsl(30 14% 95%);
+  --muted-foreground: hsl(330 5% 42%);
   --accent: hsl(18 92% 93%);
   --accent-foreground: hsl(14 52% 38%);
   --sky: hsl(212 85% 94%);
@@ -91,41 +118,44 @@
   --mint: hsl(156 55% 92%);
   --mint-foreground: hsl(160 38% 28%);
   --destructive: hsl(355 70% 52%);
-  --border: hsl(340 42% 91%);
-  --input: hsl(340 35% 88%);
-  --ring: hsl(343 74% 61%);
-  --chart-1: hsl(343 74% 64%);
+  --border: hsl(30 12% 90%);
+  --input: hsl(30 10% 86%);
+  --ring: var(--primary);
+  --chart-1: hsl(var(--hue) var(--ps) calc(var(--pl) + 3%));
   --chart-2: hsl(18 85% 72%);
   --chart-3: hsl(266 55% 72%);
   --chart-4: hsl(212 70% 70%);
   --chart-5: hsl(156 42% 58%);
   --radius: 1rem;
-  --soft-shadow: 0 1px 2px hsl(340 40% 40% / 0.04), 0 8px 24px -8px hsl(340 60% 55% / 0.14);
+  --soft-shadow: 0 1px 2px hsl(var(--hue) 40% 40% / 0.04), 0 8px 24px -8px hsl(var(--hue) 60% 55% / 0.14);
   --sidebar: hsl(0 0% 100% / 0.7);
-  --sidebar-foreground: hsl(335 28% 22%);
-  --sidebar-primary: hsl(343 74% 61%);
+  --sidebar-foreground: hsl(330 10% 21%);
+  --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(345 85% 95%);
-  --sidebar-accent-foreground: hsl(343 52% 38%);
-  --sidebar-border: hsl(340 42% 91%);
-  --sidebar-ring: hsl(343 74% 61%);
-  --blush-gradient: linear-gradient(135deg, hsl(345 90% 94%) 0%, hsl(300 70% 95%) 45%, hsl(18 95% 93%) 100%);
-  --rose-gradient: linear-gradient(135deg, hsl(343 78% 62%) 0%, hsl(325 70% 68%) 55%, hsl(12 88% 72%) 100%);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--secondary-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--primary);
+  --wash-1: hsl(var(--hue) 75% 90%);
+  --wash-2: hsl(var(--hue2) 85% 90%);
+  --wash-3: hsl(var(--hue3) 95% 88%);
+  --blush-gradient: linear-gradient(135deg, hsl(var(--hue) calc(90% * var(--ts)) 94%) 0%, hsl(var(--hue2) 70% 95%) 45%, hsl(var(--hue3) 95% 93%) 100%);
+  --rose-gradient: linear-gradient(135deg, var(--primary) 0%, hsl(var(--hue2) 60% 68%) 55%, hsl(var(--hue3) 88% 72%) 100%);
 }
 
-.dark {
-  --background: hsl(330 22% 9%);
-  --foreground: hsl(340 35% 94%);
-  --card: hsl(330 18% 13%);
-  --card-foreground: hsl(340 35% 94%);
-  --popover: hsl(330 18% 13%);
-  --popover-foreground: hsl(340 35% 94%);
-  --primary: hsl(343 85% 72%);
-  --primary-foreground: hsl(330 30% 10%);
-  --secondary: hsl(338 30% 20%);
-  --secondary-foreground: hsl(343 80% 88%);
-  --muted: hsl(330 15% 18%);
-  --muted-foreground: hsl(335 14% 70%);
+.dark, .dark [data-accent] {
+  --background: hsl(280 9% 9%);
+  --foreground: hsl(calc(var(--hue) - 3) 35% 94%);
+  --card: hsl(280 7% 13%);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: hsl(var(--hue) calc(var(--ps) + 11%) 72%);
+  --primary-foreground: hsl(calc(var(--hue) - 13) 30% 10%);
+  --secondary: hsl(calc(var(--hue) - 5) calc(30% * var(--ds)) 20%);
+  --secondary-foreground: hsl(var(--hue) calc(80% * var(--ds)) 88%);
+  --muted: hsl(280 6% 18%);
+  --muted-foreground: hsl(calc(var(--hue) - 8) calc(14% * var(--ds)) 70%);
   --accent: hsl(16 30% 20%);
   --accent-foreground: hsl(20 80% 86%);
   --sky: hsl(218 28% 20%);
@@ -137,25 +167,25 @@
   --mint: hsl(160 22% 18%);
   --mint-foreground: hsl(156 55% 82%);
   --destructive: hsl(355 75% 66%);
-  --border: hsl(330 15% 22%);
-  --input: hsl(330 15% 26%);
-  --ring: hsl(343 85% 72%);
-  --chart-1: hsl(343 85% 72%);
+  --border: hsl(280 6% 22%);
+  --input: hsl(280 6% 26%);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
   --chart-2: hsl(18 85% 72%);
   --chart-3: hsl(266 60% 76%);
   --chart-4: hsl(212 70% 72%);
   --chart-5: hsl(156 45% 62%);
   --soft-shadow: 0 1px 2px hsl(0 0% 0% / 0.3), 0 8px 24px -8px hsl(0 0% 0% / 0.5);
-  --sidebar: hsl(330 18% 11% / 0.8);
-  --sidebar-foreground: hsl(340 30% 90%);
-  --sidebar-primary: hsl(343 85% 72%);
-  --sidebar-primary-foreground: hsl(330 30% 10%);
-  --sidebar-accent: hsl(338 30% 20%);
-  --sidebar-accent-foreground: hsl(343 80% 88%);
-  --sidebar-border: hsl(330 15% 20%);
-  --sidebar-ring: hsl(343 85% 72%);
-  --blush-gradient: linear-gradient(135deg, hsl(338 32% 18%) 0%, hsl(290 22% 17%) 50%, hsl(16 28% 17%) 100%);
-  --rose-gradient: linear-gradient(135deg, hsl(343 75% 58%) 0%, hsl(325 60% 60%) 55%, hsl(12 75% 64%) 100%);
+  --sidebar: hsl(280 7% 11% / 0.8);
+  --sidebar-foreground: hsl(calc(var(--hue) - 3) 30% 90%);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--secondary-foreground);
+  --sidebar-border: hsl(280 6% 20%);
+  --sidebar-ring: var(--primary);
+  --blush-gradient: linear-gradient(135deg, hsl(var(--hue) calc(32% * var(--ds)) 18%) 0%, hsl(var(--hue2) 22% 17%) 50%, hsl(var(--hue3) 28% 17%) 100%);
+  --rose-gradient: linear-gradient(135deg, var(--primary) 0%, hsl(var(--hue2) 60% 72%) 55%, hsl(var(--hue3) 75% 70%) 100%);
 }
 
 @layer base {
@@ -166,14 +196,14 @@
     @apply bg-background text-foreground;
     /* A faint blush wash behind every page. */
     background-image:
-      radial-gradient(60rem 30rem at 100% -10%, hsl(345 90% 92% / 0.55), transparent 60%),
-      radial-gradient(50rem 30rem at -10% 110%, hsl(266 80% 94% / 0.5), transparent 60%);
+      radial-gradient(60rem 30rem at 100% -10%, hsl(30 70% 94% / 0.5), transparent 60%),
+      radial-gradient(50rem 30rem at -10% 110%, hsl(210 50% 96% / 0.45), transparent 60%);
     background-attachment: fixed;
   }
   .dark body {
     background-image:
-      radial-gradient(60rem 30rem at 100% -10%, hsl(343 50% 25% / 0.35), transparent 60%),
-      radial-gradient(50rem 30rem at -10% 110%, hsl(266 40% 25% / 0.3), transparent 60%);
+      radial-gradient(60rem 30rem at 100% -10%, hsl(30 20% 25% / 0.3), transparent 60%),
+      radial-gradient(50rem 30rem at -10% 110%, hsl(210 20% 25% / 0.25), transparent 60%);
   }
   html {
     @apply font-sans;
@@ -183,7 +213,7 @@
 @layer components {
   /* Small uppercase label above a heading. */
   .eyebrow {
-    @apply text-[0.66rem] font-bold tracking-[0.18em] text-primary uppercase;
+    @apply text-[0.66rem] font-bold tracking-[0.18em] text-secondary-foreground uppercase;
   }
 }
 
@@ -215,6 +245,14 @@
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
   50% { transform: translateY(-10px) rotate(var(--tilt, 0deg)); }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-1.2deg); }
+  50% { transform: rotate(1.2deg); }
+}
+@keyframes flap {
+  0%, 100% { transform: rotate(-14deg); }
+  50% { transform: rotate(10deg); }
 }
 @keyframes orbit {
   from { transform: rotate(0deg); }

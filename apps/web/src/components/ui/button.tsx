@@ -1,5 +1,6 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Loader2 } from "lucide-react"
 import { cn } from "cn"
 
 const buttonVariants = cva(
@@ -8,6 +9,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        // The one main action on a screen: a deep shade of the page colour.
+        solid:
+          "bg-secondary-foreground text-card shadow-soft hover:-translate-y-px hover:brightness-110 focus-visible:border-transparent focus-visible:ring-secondary-foreground/40 active:translate-y-0",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
@@ -43,14 +47,22 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { loading?: boolean }) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      aria-busy={loading || undefined}
+      disabled={disabled || loading}
+      className={cn(buttonVariants({ variant, size, className }), loading && "disabled:opacity-90")}
       {...props}
-    />
+    >
+      {loading && <Loader2 aria-hidden className="animate-spin" />}
+      {children}
+    </ButtonPrimitive>
   )
 }
 
