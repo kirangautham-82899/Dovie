@@ -20,7 +20,7 @@ export function PageHeader({
     <header className={cn("animate-rise mb-6 flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="min-w-0 space-y-2">
         {eyebrow && (
-          <p className="border-l-2 border-primary pl-2.5 text-[0.7rem] font-semibold tracking-[0.14em] text-primary uppercase">
+          <p className="border-l-2 border-primary pl-2.5 text-[0.7rem] font-semibold tracking-[0.14em] text-secondary-foreground uppercase">
             {eyebrow}
           </p>
         )}

@@ -185,6 +185,7 @@ export default function OnboardingPage() {
 
   return (
     <SplitShell
+      accent="mint"
       centered={false}
       aside={aside}
       headerRight={

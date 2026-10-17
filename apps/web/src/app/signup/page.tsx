@@ -46,8 +46,10 @@ export default function SignupPage() {
 
   return (
     <AuthShell
+      accent="lilac"
       title="Make a little space"
-      subtitle="One little win at a time."
+      subtitle="Say hello, and we will hold a spot for you."
+      signoff="Glad you came, Dovie"
       switchTo={{ prompt: "Already have an account?", label: "Sign in", href: "/login" }}
     >
       <GoogleButton />
@@ -86,7 +88,7 @@ export default function SignupPage() {
             </span>
           </label>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" size="lg" disabled={loading}>
+          <Button type="submit" size="lg" loading={loading} className="mt-1">
             {loading ? "Making space…" : "Continue"}
           </Button>
         </form>
