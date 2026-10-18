@@ -7,9 +7,16 @@
 
 export const APP_CACHE_KEY = "dovie-cache-v1";
 
+// Per-account device data: the live workout, unsynced steps and workouts,
+// and money-coach preferences.
+const ACCOUNT_PREFIXES = ["dovie-fit-", "dovie-savings"];
+
 export function clearAppCache() {
   try {
     localStorage.removeItem(APP_CACHE_KEY);
+    for (const key of Object.keys(localStorage)) {
+      if (ACCOUNT_PREFIXES.some((p) => key.startsWith(p))) localStorage.removeItem(key);
+    }
   } catch {
     // Storage can be unavailable (private mode); nothing was saved then.
   }

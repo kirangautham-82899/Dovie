@@ -15,6 +15,7 @@
     "test:crypto": "node --no-warnings scripts/crypto-test.mjs",
     "test:forecast": "node --no-warnings scripts/forecast-test.mjs",
     "test:predict": "node --no-warnings scripts/predict-test.mjs",
+    "test:tracker": "node --no-warnings scripts/tracker-test.mjs",
     "icons": "node --no-warnings scripts/generate-favicons.mjs"
   },
   "dependencies": {

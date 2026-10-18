@@ -69,8 +69,10 @@ Forecasts your month's spending and predicts next week from your own numbers.
 | Module | What it does |
 |---|---|
 | **☀️ Today** | Your top three priorities, the rest of the list, habits, a one-tap wellness check-in, bills due soon and an evening check-in with a daily score. Unfinished tasks carry over automatically. |
+| **🗓️ Planner** | A month calendar with a checklist for every day: add tasks to any date, star up to three priorities, tick them off, and move unfinished ones forward. Days you clear get a check mark. |
+| **🏃 Fitness** | A **live workout tracker** for 11 activities: moving time, GPS distance, pace, splits, route, step counter and cadence, calories, climb, laps and Bluetooth heart-rate straps. Workouts keep recording on every screen, survive a closed app and sync when you're back online. Plus activity rings, an all-day step counter, personal bests, history and a weight log. |
 | **🎯 Goals** | Growth goals with progress, a habit tracker with streaks, daily fitness targets and a free-form movement log. |
-| **💰 Money** | Expense tracker and budget planner in ₹: bills that roll forward when paid, monthly budgets by category, savings goals and a **month-end spending forecast**. Amounts are stored as integer paise. |
+| **💰 Money** | Expense tracker and budget planner in ₹: bills that roll forward when paid, monthly budgets by category, savings goals and a **month-end spending forecast**. The **AI savings coach** spots overspending, small repeat purchases and bills worth reviewing, then builds a personal saving plan with a 7-day challenge. Amounts are stored as integer paise. |
 | **📖 Journal** | A private diary with a daily prompt, gratitude line and mood. **AES-256-GCM encrypted in the browser** with a passphrase and a one-time recovery key. |
 | **💗 Wellness** | Sleep, water, energy and mood tracking, a kind focus timer and starter routines (Student, Gym beginner, 9-to-5). |
 | **📅 Calendar** | A seven-day planner with time blocks; move tasks between days in one tap. |

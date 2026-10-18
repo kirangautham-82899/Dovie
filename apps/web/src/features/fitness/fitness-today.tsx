@@ -115,8 +115,11 @@ export function FitnessToday({ today }: { today: string }) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex items-center justify-between">
         <CardTitle>Fitness goal</CardTitle>
+        <Link href="/fitness" className="text-xs font-semibold text-primary underline-offset-4 hover:underline">
+          Start a live workout →
+        </Link>
       </CardHeader>
       <CardContent className="space-y-2">
         {query.isPending && <p className="text-sm text-muted-foreground">Loading your goals...</p>}

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import type { Recurrence } from "./api";
 import { useMoney } from "./use-money";
 import { MoneyForecastCard } from "./money-forecast";
+import { SavingsCoach } from "./savings-coach";
 
 type Dialog = null | "expense" | "bill" | "budget" | "goal" | { savingsFor: string; title: string };
 
@@ -106,6 +107,7 @@ export function MoneyBoard({ today }: { today: string }) {
 
       <div className="ruled lg:grid-cols-2">
         <MoneyForecastCard today={today} data={m.query.data} />
+        <SavingsCoach today={today} data={m.query.data} />
         <Card>
           <SectionTitle icon={CalendarClock} title="Bills & regular things" />
           {bills.length === 0 ? (

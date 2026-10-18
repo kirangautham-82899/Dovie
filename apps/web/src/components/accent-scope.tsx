@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 /** One pastel colour per screen, so every page has its own mood. */
 const ACCENTS: Record<string, string> = {
   today: "rose",
+  planner: "sky",
+  fitness: "coral",
   goals: "lilac",
   money: "butter",
   journal: "sky",

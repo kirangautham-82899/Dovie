@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { BottomNav } from "@/components/bottom-nav";
 import { Preferences } from "@/components/preferences";
 import { AccentScope } from "@/components/accent-scope";
+import { FitnessRuntime } from "@/features/fitness/tracker/runtime";
 
 // Private, signed-in screens: never indexed.
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -18,6 +19,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <div className="flex-1 pb-24 lg:pb-0 lg:pl-60">{children}</div>
       <BottomNav />
+      {/* Owns the sensors, so a live workout keeps recording on every screen. */}
+      <FitnessRuntime />
       <Suspense>
         <Preferences />
       </Suspense>

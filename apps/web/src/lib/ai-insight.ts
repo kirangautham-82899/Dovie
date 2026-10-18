@@ -36,7 +36,16 @@ function allow(userId: string) {
 
 const fail = (error: string, status: number) => Response.json({ error }, { status });
 
-export async function insightResponse<T>(request: Request, input: z.ZodType<T>, system: string): Promise<Response> {
+/**
+ * `output` is the shape of the answer; it defaults to the short Insight. Any
+ * other schema must be a JSON-Schema-friendly object (no refinements).
+ */
+export async function insightResponse<T>(
+  request: Request,
+  input: z.ZodType<T>,
+  system: string,
+  output: z.ZodType = Insight,
+): Promise<Response> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
   const userId = auth?.claims.sub;
@@ -55,7 +64,7 @@ export async function insightResponse<T>(request: Request, input: z.ZodType<T>, 
 
   const instructions = `${system}\n\n${SHARED_RULES}`;
   const payload = JSON.stringify(parsed.data);
-  if (geminiKey) return askGemini(geminiKey, instructions, payload);
+  if (geminiKey) return askGemini(geminiKey, instructions, payload, output);
 
   try {
     const client = new Anthropic();
@@ -66,7 +75,7 @@ export async function insightResponse<T>(request: Request, input: z.ZodType<T>, 
       // on Anthropic's recommended model for that category.
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
-      output_config: { effort: "low", format: betaZodOutputFormat(Insight) },
+      output_config: { effort: "low", format: betaZodOutputFormat(output) },
       system: instructions,
       messages: [{ role: "user", content: payload }],
     });
@@ -74,7 +83,7 @@ export async function insightResponse<T>(request: Request, input: z.ZodType<T>, 
     if (response.stop_reason === "refusal" || !response.parsed_output) {
       return fail("Dovie couldn't read this just now. Please try again.", 502);
     }
-    return Response.json(response.parsed_output satisfies Insight);
+    return Response.json(response.parsed_output);
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) {
       return fail("AI insights aren't set up correctly (check ANTHROPIC_API_KEY).", 503);
@@ -87,8 +96,11 @@ export async function insightResponse<T>(request: Request, input: z.ZodType<T>, 
 
 // Gemini's structured output takes plain JSON Schema; "$schema" isn't one of
 // the keywords it accepts, so it is dropped.
-const INSIGHT_JSON_SCHEMA: Record<string, unknown> = { ...z.toJSONSchema(Insight) };
-delete INSIGHT_JSON_SCHEMA.$schema;
+function geminiSchema(output: z.ZodType): Record<string, unknown> {
+  const schema: Record<string, unknown> = { ...z.toJSONSchema(output) };
+  delete schema.$schema;
+  return schema;
+}
 
 // Tried in order: the configured model, then fallbacks for when it is
 // overloaded (Google returns 503 "high demand") or unavailable. Only the
@@ -103,7 +115,7 @@ function logGemini(model: string, what: string) {
   console.error(`[ask-dovie] gemini ${model}: ${what.slice(0, 300)}`);
 }
 
-async function askGemini(apiKey: string, instructions: string, payload: string): Promise<Response> {
+async function askGemini(apiKey: string, instructions: string, payload: string, output: z.ZodType): Promise<Response> {
   const ai = new GoogleGenAI({ apiKey });
   const models = [...new Set([process.env.GEMINI_MODEL ?? GEMINI_FALLBACKS[0], ...GEMINI_FALLBACKS])];
   let rateLimited = false;
@@ -118,7 +130,7 @@ async function askGemini(apiKey: string, instructions: string, payload: string):
           config: {
             systemInstruction: instructions,
             responseMimeType: "application/json",
-            responseJsonSchema: INSIGHT_JSON_SCHEMA,
+            responseJsonSchema: geminiSchema(output),
           },
         });
         // No text means the answer was blocked or empty; malformed JSON is treated the same.
@@ -128,8 +140,8 @@ async function askGemini(apiKey: string, instructions: string, payload: string):
         } catch {
           json = null;
         }
-        const insight = Insight.safeParse(json);
-        if (insight.success) return Response.json(insight.data satisfies Insight);
+        const answer = output.safeParse(json);
+        if (answer.success) return Response.json(answer.data);
         logGemini(model, `unusable reply (finish: ${response.candidates?.[0]?.finishReason ?? "none"})`);
         break; // try the next model
       } catch (error) {

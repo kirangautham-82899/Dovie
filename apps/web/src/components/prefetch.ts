@@ -11,6 +11,8 @@ import { fetchGoals, fetchMovement } from "@/features/goals/api";
 import { fetchJournal } from "@/features/journal/api";
 import { fetchWeekPlan } from "@/features/calendar/api";
 import { fetchWeek } from "@/features/weekly/api";
+import { fetchFitnessOverview } from "@/features/fitness/tracker/api";
+import { fetchPlannerMonth } from "@/features/planner/api";
 
 // Warms a screen's data when its nav link is hovered, focused or touched, so
 // it is usually ready by the time the click lands. Keys must match the hooks
@@ -27,6 +29,12 @@ const SCREENS: Record<string, (qc: QueryClient, today: string) => Promise<unknow
     qc.prefetchQuery({ queryKey: ["habits", today], queryFn: () => fetchHabits(today) }),
     qc.prefetchQuery({ queryKey: ["fitness", today], queryFn: () => fetchFitnessGoals(today) }),
     qc.prefetchQuery({ queryKey: ["movement", today], queryFn: () => fetchMovement(today) }),
+  ],
+  "/planner": (qc, today) => [
+    qc.prefetchQuery({ queryKey: ["planner", today.slice(0, 7)], queryFn: () => fetchPlannerMonth(today.slice(0, 7), today) }),
+  ],
+  "/fitness": (qc, today) => [
+    qc.prefetchQuery({ queryKey: ["fitness-tracker", today], queryFn: () => fetchFitnessOverview(today) }),
   ],
   "/money": (qc, today) => [qc.prefetchQuery({ queryKey: ["money", today], queryFn: () => fetchMoney(today) })],
   "/journal": (qc) => [qc.prefetchQuery({ queryKey: ["journal"], queryFn: fetchJournal })],

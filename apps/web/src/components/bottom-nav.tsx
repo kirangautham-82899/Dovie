@@ -7,7 +7,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   BookHeart,
   CalendarDays,
+  ListChecks,
   Ellipsis,
+  Activity,
   HeartPulse,
   LineChart,
   LogOut,
@@ -25,8 +27,10 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/today", label: "Today", icon: Sun },
-  { href: "/goals", label: "Goals", icon: Target },
+  { href: "/planner", label: "Planner", icon: ListChecks },
+  { href: "/fitness", label: "Fitness", icon: Activity },
   { href: "/money", label: "Money", icon: Wallet },
+  { href: "/goals", label: "Goals", icon: Target },
   { href: "/journal", label: "Journal", icon: BookHeart },
   { href: "/wellness", label: "Wellness", icon: HeartPulse },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
@@ -77,7 +81,6 @@ export function BottomNav() {
                 <li key={href}>
                   <Link
                     href={href}
-                  {...warm(href)}
                     {...warm(href)}
                     aria-current={active ? "page" : undefined}
                     className={cn(
@@ -113,7 +116,7 @@ export function BottomNav() {
         {moreOpen && (
           <ul className="grid grid-cols-2 border-b">
             {MORE.map(({ href, label, icon: Icon }, i) => (
-              <li key={href} className={cn(i % 2 === 0 && "border-r", i < 2 && "border-b")}>
+              <li key={href} className={cn(i % 2 === 0 && "border-r", i < MORE.length - 2 && "border-b")}>
                 <Link
                   href={href}
                   {...warm(href)}

@@ -26,6 +26,8 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       { name: "Today", url: "/today", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Start a workout", url: "/fitness", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Planner", url: "/planner", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Money", url: "/money", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Journal", url: "/journal", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
     ],

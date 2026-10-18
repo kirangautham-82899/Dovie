@@ -29,7 +29,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         // live score, wellness totals, the movement log, the weekly review), so
         // any change refreshes them. Only queries on screen actually refetch.
         onSettled: () => {
-          for (const key of ["checkin", "wellness", "movement", "week", "calendar"]) {
+          for (const key of ["checkin", "wellness", "movement", "week", "calendar", "planner", "tasks"]) {
             void qc.invalidateQueries({ queryKey: [key] });
           }
         },

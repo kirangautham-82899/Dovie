@@ -91,6 +91,7 @@
 [data-accent="sky"] { --hue: 212; --hue2: 266; --hue3: 160; --ps: 68%; --pl: 75%; --ts: 0.85; }
 [data-accent="butter"] { --hue: 42; --hue2: 18; --hue3: 156; --ps: 86%; --pl: 69%; --ts: 0.9; }
 [data-accent="peach"] { --hue: 18; --hue2: 343; --hue3: 44; --ps: 84%; --pl: 77%; --ts: 1; }
+[data-accent="coral"] { --hue: 8; --hue2: 330; --hue3: 40; --ps: 80%; --pl: 71%; --ts: 1; }
 
 :root, [data-accent] {
   --ds: calc(0.5 + 0.5 * var(--ts));
@@ -240,6 +241,53 @@
     background-clip: text;
     color: transparent;
   }
+}
+
+@layer components {
+  /* Fitness: each activity sets --act (a hue) and these surfaces follow it. */
+  .fit-pill {
+    background-image: linear-gradient(135deg, hsl(var(--act, 8) 72% 50%), hsl(calc(var(--act, 8) + 35) 78% 58%));
+    box-shadow: 0 10px 30px -8px hsl(var(--act, 8) 70% 40% / 0.6);
+  }
+  .fit-live {
+    background:
+      radial-gradient(70rem 40rem at 10% -10%, hsl(var(--act, 8) 85% 58% / 0.55), transparent 60%),
+      radial-gradient(50rem 40rem at 110% 110%, hsl(calc(var(--act, 8) + 45) 85% 58% / 0.45), transparent 55%),
+      hsl(var(--act, 8) 28% 8%);
+    color: white;
+  }
+  .fit-live-glass {
+    background: hsl(0 0% 100% / 0.08);
+    border: 1px solid hsl(0 0% 100% / 0.12);
+    backdrop-filter: blur(12px);
+  }
+  .fit-hero {
+    background:
+      radial-gradient(28rem 18rem at 0% 0%, hsl(8 90% 88% / 0.9), transparent 70%),
+      radial-gradient(26rem 20rem at 100% 100%, hsl(200 85% 90% / 0.9), transparent 70%),
+      radial-gradient(20rem 14rem at 100% 0%, hsl(150 60% 90% / 0.8), transparent 70%),
+      var(--card);
+  }
+  .dark .fit-hero {
+    background:
+      radial-gradient(28rem 18rem at 0% 0%, hsl(8 45% 22% / 0.9), transparent 70%),
+      radial-gradient(26rem 20rem at 100% 100%, hsl(200 40% 20% / 0.9), transparent 70%),
+      var(--card);
+  }
+  .fit-start {
+    background-image: linear-gradient(135deg, hsl(var(--act, 8) 75% 55%), hsl(calc(var(--act, 8) + 35) 80% 60%));
+    box-shadow: 0 14px 34px -10px hsl(var(--act, 8) 75% 45% / 0.7);
+  }
+  .fit-ring-arc {
+    transition: stroke-dashoffset 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .fit-ring-arc.fit-ring-draw {
+    animation: ring-draw 1.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+}
+
+@keyframes ring-draw {
+  from { stroke-dashoffset: var(--ring-len); }
 }
 
 @keyframes float {

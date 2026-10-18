@@ -1,0 +1,21 @@
+// Dovie's service worker. It only handles notification taps (bringing the
+// live workout back to the front); it does not cache or intercept requests.
+
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/fitness";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      for (const w of wins) {
+        if ("focus" in w) {
+          w.navigate(url).catch(() => {});
+          return w.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});
