@@ -5,12 +5,23 @@
 // cached query instead of a server round trip per navigation. Each screen has
 // its own small view file so a page only compiles and ships its own code.
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { ErrorNote } from "@/components/page-header";
 import { useProfile } from "@/features/settings/use-profile";
 import type { Profile } from "@/features/settings/api";
 import { todayInTimezone } from "@/lib/dates";
+
+const noopSubscribe = () => () => {};
+
+/** False while the server renders and while the client hydrates, true after. */
+function useHydrated() {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 export type Ctx = { profile: Profile; today: string };
 
@@ -45,6 +56,10 @@ export function TodayGate({ children, skeleton }: { children: (ctx: Ctx) => Reac
   const { query } = useProfile();
   const profile = query.data;
   const needsOnboarding = !!profile && !profile.onboarded_at;
+  // The saved query cache can already hold the profile on the client, but the
+  // server never has it. Show the skeleton until hydration is done so the two
+  // renders match, then swap in the cached screen.
+  const hydrated = useHydrated();
 
   useEffect(() => {
     if (needsOnboarding) router.replace("/onboarding");
@@ -53,7 +68,7 @@ export function TodayGate({ children, skeleton }: { children: (ctx: Ctx) => Reac
   if (query.isError) {
     return <ErrorNote message={`Could not load your profile: ${query.error.message}`} onRetry={() => query.refetch()} />;
   }
-  if (!profile || needsOnboarding) return <>{skeleton ?? <ViewSkeleton />}</>;
+  if (!hydrated || !profile || needsOnboarding) return <>{skeleton ?? <ViewSkeleton />}</>;
   return <>{children({ profile, today: todayInTimezone(profile.timezone) })}</>;
 }
 
