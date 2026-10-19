@@ -10,7 +10,7 @@ export default function GoalsPage() {
         eyebrow="small steps, real growth"
         title="Things you're"
         accent="growing."
-        subtitle="A goal can be a direction, not a deadline. Set things up here, then log them in one tap from Today."
+        subtitle="A goal can be a direction, not a deadline. Set things up here, then tick them off each day."
       />
       <GoalsView />
     </PageShell>

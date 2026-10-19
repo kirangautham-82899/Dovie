@@ -142,7 +142,7 @@ export function HabitsManager({ today }: { today: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Habits</CardTitle>
+        <CardTitle>All habits</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <form onSubmit={submit} className="flex gap-2">
@@ -168,7 +168,7 @@ export function HabitsManager({ today }: { today: string }) {
         {query.isError && <p className="text-sm text-destructive">Could not load habits: {query.error.message}</p>}
         {query.isSuccess && habits.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            Start small: one habit you can do every day. You log it in one tap from Today.
+            Start small: one habit you can do every day. Tick it off above each day.
           </p>
         )}
 

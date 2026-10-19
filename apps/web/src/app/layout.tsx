@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Fraunces } from "next/font/google";
+import { Caveat, DM_Sans, Fraunces } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { InstallPrompt } from "@/components/install-prompt";
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
@@ -14,6 +14,12 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
   style: ["normal", "italic"],
+});
+
+// A handwritten face, used sparingly for sticky notes and the daily line.
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -69,7 +75,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en-IN"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${fraunces.variable} ${caveat.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

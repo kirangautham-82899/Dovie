@@ -4,29 +4,27 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskItem } from "./task-item";
 import { useTasks } from "./use-tasks";
 import { MAX_PRIORITIES, MAX_TITLE_LENGTH, type Task } from "./types";
 
-/** Unfinished tasks first, then finished ones; creation order within each group. */
+/** Unfinished first, starred ones ahead of the rest, then creation order. */
 function sortTasks(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
     const doneDiff = Number(a.completed_at !== null) - Number(b.completed_at !== null);
-    return doneDiff || a.created_at.localeCompare(b.created_at);
+    return doneDiff || Number(b.is_priority) - Number(a.is_priority) || a.created_at.localeCompare(b.created_at);
   });
 }
 
+/** Today's plans as a checklist. The top three live in the Planner; a star here pins a plan there. */
 export function TasksSection({ today }: { today: string }) {
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const { query, add, toggle, prioritise, rename, remove } = useTasks(today, setError);
 
-  const tasks = query.data ?? [];
-  const priorities = sortTasks(tasks.filter((t) => t.is_priority));
-  const others = sortTasks(tasks.filter((t) => !t.is_priority));
+  const tasks = sortTasks(query.data ?? []);
   const doneCount = tasks.filter((t) => t.completed_at !== null).length;
-  const locked = priorities.length >= MAX_PRIORITIES;
+  const locked = tasks.filter((t) => t.is_priority).length >= MAX_PRIORITIES;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,83 +62,61 @@ export function TasksSection({ today }: { today: string }) {
 
   if (query.isPending) {
     return (
-      <Card aria-busy="true">
-        <CardContent className="py-6 text-sm text-muted-foreground">Loading your tasks...</CardContent>
-      </Card>
+      <section aria-busy="true" className="py-2 text-sm text-muted-foreground">
+        Loading your tasks...
+      </section>
     );
   }
 
   if (query.isError) {
     return (
-      <Card>
-        <CardContent className="space-y-3 py-6 text-sm">
-          <p className="text-destructive">Could not load your tasks: {query.error.message}</p>
-          <Button size="sm" variant="outline" onClick={() => query.refetch()}>
-            Try again
-          </Button>
-        </CardContent>
-      </Card>
+      <section className="space-y-3 py-2 text-sm">
+        <p className="text-destructive">Could not load your tasks: {query.error.message}</p>
+        <Button size="sm" variant="outline" onClick={() => query.refetch()}>
+          Try again
+        </Button>
+      </section>
     );
   }
 
   return (
-    <>
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Your top three</CardTitle>
-          <span className="text-xs text-muted-foreground">
-            {priorities.length}/{MAX_PRIORITIES}
+    <section aria-labelledby="todo-title" className="space-y-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 id="todo-title" className="font-serif text-2xl tracking-tight">
+          To do today
+        </h2>
+        {tasks.length > 0 && (
+          <span className="font-hand text-xl text-muted-foreground">
+            {doneCount} of {tasks.length} done
           </span>
-        </CardHeader>
-        <CardContent>
-          {priorities.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Pick one small thing to make the day feel like yours. Tap the star on a plan to add it here.
-            </p>
-          ) : (
-            <ul>{priorities.map(renderItem)}</ul>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>The rest of today</CardTitle>
-          {tasks.length > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {doneCount} of {tasks.length} done
-            </span>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <form onSubmit={submit} className="flex gap-2">
-            <Input
-              aria-label="New task"
-              placeholder="Add a small plan…"
-              maxLength={MAX_TITLE_LENGTH}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <Button type="submit" size="icon" aria-label="Add task" disabled={add.isPending || !title.trim()}>
-              <Plus />
-            </Button>
-          </form>
+      <form onSubmit={submit} className="flex gap-2">
+        <Input
+          aria-label="New task"
+          placeholder="Add a small plan…"
+          maxLength={MAX_TITLE_LENGTH}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="bg-card"
+        />
+        <Button type="submit" size="icon" aria-label="Add task" disabled={add.isPending || !title.trim()}>
+          <Plus />
+        </Button>
+      </form>
 
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
-          {others.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {tasks.length === 0 ? "Nothing on the list yet. Add one small plan above." : "Nothing else on the list."}
-            </p>
-          ) : (
-            <ul>{others.map(renderItem)}</ul>
-          )}
-        </CardContent>
-      </Card>
-    </>
+      {tasks.length === 0 ? (
+        <p className="font-hand text-xl text-muted-foreground">A clear page. Add one small plan above.</p>
+      ) : (
+        <ul className="[&>li]:border-b [&>li]:border-dashed">{tasks.map(renderItem)}</ul>
+      )}
+    </section>
   );
 }

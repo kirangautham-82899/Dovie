@@ -7,6 +7,7 @@ export function PageHeader({
   subtitle,
   action,
   className,
+  compact,
 }: {
   eyebrow?: string;
   title: string;
@@ -15,6 +16,8 @@ export function PageHeader({
   subtitle?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
+  /** A smaller title, for screens where the content should lead. */
+  compact?: boolean;
 }) {
   return (
     <header className={cn("animate-rise mb-6 flex flex-wrap items-end justify-between gap-4", className)}>
@@ -24,7 +27,12 @@ export function PageHeader({
             {eyebrow}
           </p>
         )}
-        <h1 className="font-serif text-[2.2rem] leading-[1.02] tracking-tight sm:text-5xl">
+        <h1
+          className={cn(
+            "font-serif tracking-tight",
+            compact ? "text-[1.7rem] leading-[1.1] sm:text-[2.35rem]" : "text-[2.2rem] leading-[1.02] sm:text-5xl",
+          )}
+        >
           {title}
           {accent && (
             <>

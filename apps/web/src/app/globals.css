@@ -10,6 +10,7 @@
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
   --font-mono: ui-monospace, monospace;
+  --font-hand: var(--font-caveat), "Segoe Print", "Bradley Hand", cursive;
   --font-heading: var(--font-serif);
   --color-sky: var(--sky);
   --color-sky-foreground: var(--sky-foreground);
@@ -240,6 +241,65 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+}
+
+@layer components {
+  /* Today: a dot-grid notebook page with sticky notes pinned to it. */
+  .dot-paper {
+    background-color: var(--card);
+    background-image: radial-gradient(circle, color-mix(in oklab, var(--foreground) 17%, transparent) 1px, transparent 1.4px);
+    background-size: 22px 22px;
+    background-position: 11px 11px;
+    border: 1px solid var(--border);
+    box-shadow: var(--soft-shadow);
+  }
+  .sticky-note {
+    position: relative;
+    box-shadow:
+      0 1px 1px hsl(0 0% 0% / 0.06),
+      0 10px 16px -8px hsl(0 0% 0% / 0.22);
+    transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), rotate 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.25s;
+  }
+  /* Tilts use the individual `rotate` property (Tailwind), so hover:rotate-0 on the note straightens it. */
+  .sticky-note:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 1px hsl(0 0% 0% / 0.06),
+      0 16px 22px -10px hsl(0 0% 0% / 0.28);
+  }
+  /* A strip of washi tape holding a note down. */
+  .tape::before {
+    content: "";
+    position: absolute;
+    top: -0.55rem;
+    left: 50%;
+    width: 3.4rem;
+    height: 1.1rem;
+    translate: -50% 0;
+    rotate: var(--tape-tilt, -3deg);
+    background: hsl(0 0% 100% / 0.55);
+    border: 1px solid hsl(0 0% 0% / 0.05);
+    box-shadow: 0 1px 2px hsl(0 0% 0% / 0.08);
+    pointer-events: none;
+  }
+  .dark .tape::before {
+    background: hsl(0 0% 100% / 0.14);
+  }
+  /* Marker swipe behind the daily line. */
+  .highlighter {
+    background-image: linear-gradient(transparent 58%, hsl(44 95% 78% / 0.75) 58%, hsl(44 95% 78% / 0.75) 92%, transparent 92%);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .dark .highlighter {
+    background-image: linear-gradient(transparent 58%, hsl(44 60% 40% / 0.5) 58%, hsl(44 60% 40% / 0.5) 92%, transparent 92%);
+  }
+  /* Ruled lines for a notepad textarea (line-height must match the 1.75rem step). */
+  .pad-lines {
+    background-image: linear-gradient(transparent calc(1.75rem - 1px), color-mix(in oklab, var(--foreground) 14%, transparent) calc(1.75rem - 1px));
+    background-size: 100% 1.75rem;
+    line-height: 1.75rem;
   }
 }
 

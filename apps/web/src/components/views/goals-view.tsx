@@ -2,6 +2,7 @@
 
 import { GoalsBoard, MovementLog } from "@/features/goals/goals-board";
 import { HabitsManager } from "@/features/habits/habits-manager";
+import { HabitsToday } from "@/features/habits/habits-today";
 import { FitnessManager } from "@/features/fitness/fitness-manager";
 import { TodayGate } from "./today-gate";
 
@@ -14,6 +15,7 @@ export function GoalsView() {
             <GoalsBoard />
           </div>
           <div className="divide-y">
+            <HabitsToday today={today} />
             <HabitsManager today={today} />
           </div>
           <div className="divide-y">

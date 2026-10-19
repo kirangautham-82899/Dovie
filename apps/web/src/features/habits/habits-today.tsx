@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ export function HabitsToday({ today }: { today: string }) {
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
-        <CardTitle>Habits</CardTitle>
+        <CardTitle>Today&apos;s habits</CardTitle>
         {habits.length > 0 && (
           <span className="text-xs text-muted-foreground">
             {doneCount} of {habits.length} done
@@ -38,13 +37,7 @@ export function HabitsToday({ today }: { today: string }) {
         )}
 
         {query.isSuccess && habits.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            No habits yet.{" "}
-            <Link href="/goals" className="underline">
-              Add your first one
-            </Link>
-            .
-          </p>
+          <p className="text-sm text-muted-foreground">No habits yet. Add your first one below.</p>
         )}
 
         {habits.length > 0 && (

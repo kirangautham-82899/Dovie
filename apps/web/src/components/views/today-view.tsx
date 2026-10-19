@@ -6,12 +6,13 @@ import { Card } from "@/components/ui/card";
 import { PageHeader, SectionTitle } from "@/components/page-header";
 import type { Profile } from "@/features/settings/api";
 import { TasksSection } from "@/features/tasks/tasks-section";
-import { HabitsToday } from "@/features/habits/habits-today";
 import { FitnessToday } from "@/features/fitness/fitness-today";
 import { CheckinCard } from "@/features/checkin/checkin-card";
 import { WellnessToday } from "@/features/wellness/wellness-today";
 import { BillsToday } from "@/features/money/bills-today";
 import { TodayGlance } from "@/features/today/today-glance";
+import { QuickNotes } from "@/features/today/quick-notes";
+import { dailyMessage } from "@/features/today/daily-message";
 import { TodayGate, ViewSkeleton } from "./today-gate";
 
 function greeting(timeZone: string) {
@@ -22,14 +23,24 @@ function greeting(timeZone: string) {
   return "Good evening";
 }
 
+/** The Today screen is one dot-grid notebook page. */
+function Paper({ children }: { children: React.ReactNode }) {
+  return <div className="dot-paper p-4 sm:p-8">{children}</div>;
+}
+
+/** A loose slip of paper for the smaller cards that sit on the page. */
+function Slip({ children }: { children: React.ReactNode }) {
+  return <div className="border bg-card/95 shadow-sm">{children}</div>;
+}
+
 export function TodayView() {
   return (
     <TodayGate
       skeleton={
-        <>
-          <PageHeader eyebrow="today" title="A little at a" accent="time." />
+        <Paper>
+          <PageHeader compact eyebrow="today" title="A little at a" accent="time." />
           <ViewSkeleton />
-        </>
+        </Paper>
       }
     >
       {({ profile, today }) => {
@@ -42,39 +53,58 @@ export function TodayView() {
           month: "long",
         });
         return (
-          <>
+          <Paper>
             <PageHeader
+              compact
               eyebrow={date}
               title={`${greeting(profile.timezone)},`}
               accent={`${firstName ?? "friend"}.`}
-              subtitle="You don't have to do it all. Just begin somewhere."
+              subtitle={<span className="highlighter font-hand text-xl leading-snug text-foreground sm:text-2xl">{dailyMessage(today)}</span>}
             />
             <TodayGlance today={today} />
-            <div className="ruled lg:grid-cols-[1.25fr_1fr]">
-              <div className="divide-y">
-                {has("tasks") && <TasksSection today={today} />}
-                {has("habits") && <HabitsToday today={today} />}
-                {has("fitness") && <FitnessToday today={today} />}
-              </div>
-              <div className="divide-y">
-                {(has("wellness") || has("fitness")) && <WellnessToday today={today} />}
-                {has("money") && <BillsToday today={today} />}
-                {has("journal") && (
-                  <Card className="border-t-2 border-t-chart-3">
-                    <SectionTitle icon={BookHeart} title="A moment for you" />
-                    <p className="text-sm text-muted-foreground">A sentence is plenty. It stays private and encrypted.</p>
-                    <Link
-                      href="/journal"
-                      className="inline-flex w-fit text-sm font-semibold text-primary underline-offset-4 hover:underline"
-                    >
-                      Open your journal →
-                    </Link>
-                  </Card>
-                )}
-                <CheckinCard today={today} />
-              </div>
+            <div className="mt-10 grid items-start gap-8 lg:grid-cols-[1.25fr_1fr] lg:gap-10">
+              <div className="min-w-0">{has("tasks") && <TasksSection today={today} />}</div>
+              <QuickNotes />
             </div>
-          </>
+            <div className="mt-10 grid items-start gap-8 md:grid-cols-2 lg:gap-10">
+              {(has("wellness") || has("fitness")) && (
+                <Slip>
+                  <WellnessToday today={today} />
+                </Slip>
+              )}
+              <Slip>
+                <CheckinCard today={today} />
+              </Slip>
+            </div>
+            {(has("fitness") || has("money") || has("journal")) && (
+              <div className="mt-10 grid items-start gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-10">
+                {has("fitness") && (
+                  <Slip>
+                    <FitnessToday today={today} />
+                  </Slip>
+                )}
+                {has("money") && (
+                  <Slip>
+                    <BillsToday today={today} />
+                  </Slip>
+                )}
+                {has("journal") && (
+                  <Slip>
+                    <Card>
+                      <SectionTitle icon={BookHeart} title="A moment for you" />
+                      <p className="text-sm text-muted-foreground">A sentence is plenty. It stays private and encrypted.</p>
+                      <Link
+                        href="/journal"
+                        className="inline-flex w-fit text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                      >
+                        Open your journal →
+                      </Link>
+                    </Card>
+                  </Slip>
+                )}
+              </div>
+            )}
+          </Paper>
         );
       }}
     </TodayGate>

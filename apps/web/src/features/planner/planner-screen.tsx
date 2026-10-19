@@ -216,6 +216,9 @@ function DayPanel({
     (a, b) => Number(!!a.completed_at) - Number(!!b.completed_at) || Number(b.is_priority) - Number(a.is_priority),
   );
   const shown = hideDone ? sorted.filter((t) => !t.completed_at) : sorted;
+  const shownTop = shown.filter((t) => t.is_priority);
+  const shownRest = shown.filter((t) => !t.is_priority);
+  const emptySlots = Math.max(0, MAX_PRIORITIES - priorities);
   const rel = relativeDay(day, today);
   const isPast = day < today;
   const tomorrow = addDays(day, 1);
@@ -243,6 +246,38 @@ function DayPanel({
         <div className="animate-rise flex items-center gap-2 rounded-2xl bg-mint px-3.5 py-2.5 text-sm text-mint-foreground">
           <Sparkles className="size-4" /> Day complete. Take a breath and enjoy it.
         </div>
+      )}
+
+      {!loading && (
+        <section aria-label="Top three" className="space-y-1.5">
+          <div className="flex items-baseline justify-between">
+            <h3 className="font-serif text-lg tracking-tight">Top three</h3>
+            <span className="text-xs text-muted-foreground">
+              {priorities}/{MAX_PRIORITIES}
+            </span>
+          </div>
+          <ul className="space-y-1.5">
+            {shownTop.map((t) => (
+              <PlanRow
+                key={t.id}
+                task={t}
+                tomorrow={tomorrow}
+                priorityLocked={false}
+                actions={actions}
+                onClearError={onClearError}
+              />
+            ))}
+            {Array.from({ length: emptySlots }, (_, i) => (
+              <li
+                key={i}
+                className="flex items-center gap-3 rounded-2xl border border-dashed px-3 py-2.5 text-sm text-muted-foreground"
+              >
+                <span className="flex size-6 shrink-0 items-center justify-center font-serif text-base">{priorities + i + 1}</span>
+                {i === 0 ? "Star a plan to pin it here" : "Room for one more"}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <form
@@ -290,12 +325,12 @@ function DayPanel({
         </div>
       ) : (
         <ul className="space-y-1.5">
-          {shown.map((t) => (
+          {shownRest.map((t) => (
             <PlanRow
               key={t.id}
               task={t}
               tomorrow={tomorrow}
-              priorityLocked={!t.is_priority && priorities >= MAX_PRIORITIES}
+              priorityLocked={priorities >= MAX_PRIORITIES}
               actions={actions}
               onClearError={onClearError}
             />
