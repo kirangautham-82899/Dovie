@@ -24,7 +24,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/modal";
 import { ChoicePills, Field } from "@/components/field";
-import { StatTile } from "@/components/stat-tile";
+import { Slip, Sticky, StickyValue } from "@/components/notebook";
 import { EmptyState, ErrorNote, SectionTitle } from "@/components/page-header";
 import { addDays, formatDate, relativeDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,16 @@ import { requestMotionPermission, useSensors } from "./sensors";
 import { setLiveMinimized, setStepCounter, useLiveMinimized, usePendingSteps, useStepCounter } from "./runtime";
 import { activeStreak, activityMix, dayTotals, personalRecords, weekTotals } from "./stats";
 
+/** Header copy, shared with the loading skeleton so the page doesn't jump. */
+export const FITNESS_HEADER = {
+  eyebrow: "move, gently",
+  title: "Move in your",
+  accent: "own way.",
+};
+
+/** Cards on the fitness page are a little tighter than the default. */
+const dense = "p-4 sm:p-5";
+
 const RING_COLORS = { move: "hsl(8 85% 62%)", exercise: "hsl(150 55% 48%)", steps: "hsl(205 85% 58%)" };
 
 export function FitnessScreen({ today, profileId }: { today: string; profileId: string }) {
@@ -69,42 +79,57 @@ export function FitnessScreen({ today, profileId }: { today: string; profileId: 
   const targets = data?.targets ?? null;
 
   return (
-    <div className="space-y-6">
-      {query.isError && <ErrorNote message={`Could not load your activity: ${query.error.message}`} onRetry={() => query.refetch()} />}
-
-      <div className="ruled lg:grid-cols-[1.1fr_1fr]">
-        <TodayRings data={data} today={today} pending={pending} profileId={profileId} />
-        <StartPanel
-          today={today}
-          targets={targets}
-          disabled={live !== null || review !== null}
-          onResume={() => setLiveMinimized(false)}
-        />
-      </div>
-
-      {data && <WeekTiles data={data} today={today} pending={pending} />}
-
-      <div className="ruled lg:grid-cols-2">
-        {data ? <WeekChart data={data} today={today} pending={pending} /> : <Card className="h-64 animate-pulse" />}
-        <StepCounterCard targets={targets} today={today} pending={pending} data={data} />
-      </div>
-
-      {data && (
-        <div className="ruled lg:grid-cols-2">
-          <RecordsCard data={data} />
-          <MixCard data={data} today={today} />
+    <>
+      {query.isError && (
+        <div className="mb-4">
+          <ErrorNote message={`Could not load your activity: ${query.error.message}`} onRetry={() => query.refetch()} />
         </div>
       )}
 
-      {data && <History data={data} today={today} onMessage={setToast} />}
+      {data && <WeekNotes data={data} today={today} pending={pending} />}
 
-      {data && (
-        <div className="ruled">
-          <BodyCard data={data} today={today} profileId={profileId} onMessage={setToast} />
+      <div className={cn("space-y-5", data && "mt-8")}>
+        <Slip className="ruled lg:grid-cols-[1.1fr_1fr]">
+          <TodayRings data={data} today={today} pending={pending} profileId={profileId} />
+          <StartPanel
+            today={today}
+            targets={targets}
+            disabled={live !== null || review !== null}
+            onResume={() => setLiveMinimized(false)}
+          />
+        </Slip>
+
+        <div className="grid items-start gap-5 lg:grid-cols-2">
+          <div className="min-w-0 space-y-5">
+            <Slip>{data ? <WeekChart data={data} today={today} pending={pending} /> : <Card className="h-56 animate-pulse" />}</Slip>
+            {data && (
+              <Slip>
+                <History data={data} today={today} onMessage={setToast} />
+              </Slip>
+            )}
+          </div>
+          <div className="min-w-0 space-y-5">
+            <Slip>
+              <StepCounterCard targets={targets} today={today} pending={pending} data={data} />
+            </Slip>
+            {data && (
+              <>
+                <Slip>
+                  <RecordsCard data={data} />
+                </Slip>
+                <Slip>
+                  <MixCard data={data} today={today} />
+                </Slip>
+                <Slip>
+                  <BodyCard data={data} today={today} profileId={profileId} onMessage={setToast} />
+                </Slip>
+              </>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
-      <p className="text-[0.7rem] text-muted-foreground">
+      <p className="mt-5 text-xs text-muted-foreground">
         Distance, steps and calories are estimates from your phone&apos;s sensors. For tracking only, not medical advice.
       </p>
 
@@ -124,7 +149,7 @@ export function FitnessScreen({ today, profileId }: { today: string; profileId: 
           {toast}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -142,7 +167,7 @@ function TodayRings({ data, today, pending, profileId }: { data: FitnessOverview
   const closed = rings.filter((r) => r.value >= r.goal).length;
 
   return (
-    <Card className="fit-hero">
+    <Card className={cn("fit-hero", dense)}>
       <SectionTitle
         icon={Zap}
         title="Today"
@@ -152,19 +177,19 @@ function TodayRings({ data, today, pending, profileId }: { data: FitnessOverview
           </Button>
         }
       />
-      <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-        <ActivityRings rings={rings} size={208} stroke={17}>
-          <p className="font-serif text-4xl leading-none tabular-nums">{(t?.steps ?? 0).toLocaleString("en-IN")}</p>
+      <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
+        <ActivityRings rings={rings} size={176} stroke={15}>
+          <p className="font-serif text-3xl leading-none tabular-nums">{(t?.steps ?? 0).toLocaleString("en-IN")}</p>
           <p className="mt-1 text-[0.65rem] font-bold tracking-[0.16em] text-muted-foreground uppercase">steps</p>
           <p className="mt-1 text-xs text-muted-foreground">{formatKm(t?.distanceM ?? 0)} km</p>
         </ActivityRings>
-        <div className="w-full flex-1 space-y-4">
+        <div className="w-full flex-1 space-y-3">
           <RingStat ring={rings[0]} unit="kcal" icon={Flame} />
           <RingStat ring={rings[1]} unit="min" icon={Timer} />
           <RingStat ring={rings[2]} unit="steps" icon={Footprints} />
         </div>
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p className="font-hand text-xl leading-snug">
         {closed === 3
           ? "All three rings closed. That's a full day of moving."
           : closed > 0
@@ -215,7 +240,7 @@ function StartPanel({ today, targets, disabled, onResume }: { today: string; tar
   const goalValue = goals.some((g) => g.value === goal) ? goal : "open";
 
   return (
-    <Card style={{ "--act": def.hue } as React.CSSProperties}>
+    <Card className={dense} style={{ "--act": def.hue } as React.CSSProperties}>
       <SectionTitle icon={Play} title="Start a workout" />
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-4 xl:grid-cols-6" role="radiogroup" aria-label="Activity">
         {ACTIVITIES.map((a) => {
@@ -230,7 +255,7 @@ function StartPanel({ today, targets, disabled, onResume }: { today: string; tar
               onClick={() => setPicked(a.id)}
               style={{ "--act": a.hue } as React.CSSProperties}
               className={cn(
-                "flex flex-col items-center gap-1.5 rounded-2xl border px-1 py-2.5 text-[0.7rem] font-semibold transition-all",
+                "flex flex-col items-center gap-1 rounded-2xl border px-1 py-2 text-[0.7rem] font-semibold transition-all",
                 on ? "fit-start scale-[1.04] border-transparent text-white" : "bg-background hover:-translate-y-0.5 hover:border-primary/40",
               )}
             >
@@ -241,19 +266,10 @@ function StartPanel({ today, targets, disabled, onResume }: { today: string; tar
         })}
       </div>
 
-      <div className="space-y-1.5">
-        <p className="text-xs font-semibold">Goal</p>
-        <ChoicePills label="Workout goal" options={goals} value={goalValue} onChange={setGoal} />
-      </div>
-
-      <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        {def.gps && <span>• GPS distance, pace, route &amp; splits</span>}
-        {def.steps && <span>• Step counter &amp; cadence</span>}
-        <span>• Calories, laps &amp; heart-rate strap</span>
-      </p>
+      <ChoicePills label="Workout goal" options={goals} value={goalValue} onChange={setGoal} />
 
       {live ? (
-        <Button size="lg" className="fit-start h-14 w-full text-base text-white" style={{ "--act": activity(live.activity).hue } as React.CSSProperties} onClick={onResume}>
+        <Button size="lg" className="fit-start h-12 w-full text-base text-white" style={{ "--act": activity(live.activity).hue } as React.CSSProperties} onClick={onResume}>
           <Play className="fill-current" /> Back to your {activity(live.activity).label.toLowerCase()}
         </Button>
       ) : (
@@ -269,10 +285,10 @@ function StartPanel({ today, targets, disabled, onResume }: { today: string; tar
             setLiveMinimized(false);
             setStarting(false);
           }}
-          className="fit-start group relative flex h-16 w-full items-center justify-center gap-3 overflow-hidden rounded-full text-lg font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="fit-start group relative flex h-13 w-full items-center justify-center gap-3 overflow-hidden rounded-full text-base font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-60"
         >
           <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-700 group-hover:translate-x-full" />
-          <span className="relative flex size-10 items-center justify-center rounded-full bg-white/25">
+          <span className="relative flex size-8 items-center justify-center rounded-full bg-white/25">
             <Play className="size-5 fill-current" />
           </span>
           Start {def.label.toLowerCase()}
@@ -284,7 +300,7 @@ function StartPanel({ today, targets, disabled, onResume }: { today: string; tar
 
 // ---------- week ----------
 
-function WeekTiles({ data, today, pending }: { data: FitnessOverview; today: string; pending: number }) {
+function WeekNotes({ data, today, pending }: { data: FitnessOverview; today: string; pending: number }) {
   const week = weekTotals(data, today, pending);
   const minutes = week.reduce((s, d) => s + d.activeMin, 0);
   const km = week.reduce((s, d) => s + d.distanceM, 0) / 1000;
@@ -292,11 +308,37 @@ function WeekTiles({ data, today, pending }: { data: FitnessOverview; today: str
   const workouts = data.sessions.filter((s) => s.session_date >= monthStart).length;
   const streak = activeStreak(data, today, pending);
   return (
-    <div className="ruled grid-cols-2 md:grid-cols-4">
-      <StatTile tone="mint" icon={Timer} label="Active this week" value={minutes} unit="min" caption={`${Math.round(minutes / 7)} min a day on average`} />
-      <StatTile tone="sky" icon={Route} label="Distance this week" value={km.toFixed(1)} unit="km" />
-      <StatTile tone="peach" icon={Flame} label="Active streak" value={streak} unit={streak === 1 ? "day" : "days"} caption={streak ? "Keep it gentle" : "Today can be day one"} />
-      <StatTile tone="lilac" icon={CalendarCheck} label="Workouts this month" value={workouts} />
+    <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:gap-x-5 md:grid-cols-4">
+      <Sticky
+        label="Active"
+        icon={Timer}
+        caption={`~${Math.round(minutes / 7)} min a day this week`}
+        tilt="-rotate-1 [--tape-tilt:-4deg]"
+        tone="bg-mint text-mint-foreground"
+      >
+        <StickyValue value={minutes} unit="min" />
+      </Sticky>
+      <Sticky label="Distance" icon={Route} caption="this week" tilt="rotate-1 [--tape-tilt:3deg]" tone="bg-sky text-sky-foreground">
+        <StickyValue value={km.toFixed(1)} unit="km" />
+      </Sticky>
+      <Sticky
+        label="Streak"
+        icon={Flame}
+        caption={streak ? "keep it gentle" : "today can be day one"}
+        tilt="-rotate-[0.5deg] [--tape-tilt:-2deg]"
+        tone="bg-butter text-butter-foreground"
+      >
+        <StickyValue value={streak} unit={streak === 1 ? "day" : "days"} />
+      </Sticky>
+      <Sticky
+        label="Workouts"
+        icon={CalendarCheck}
+        caption={`in ${formatDate(today, { month: "long" })}`}
+        tilt="rotate-[1.5deg] [--tape-tilt:4deg]"
+        tone="bg-secondary text-secondary-foreground"
+      >
+        <StickyValue value={workouts} />
+      </Sticky>
     </div>
   );
 }
@@ -306,9 +348,9 @@ function WeekChart({ data, today, pending }: { data: FitnessOverview; today: str
   const goal = data.targets.active_goal_min;
   const max = Math.max(goal * 1.25, ...week.map((d) => d.activeMin), 1);
   return (
-    <Card>
+    <Card className={dense}>
       <SectionTitle icon={CalendarCheck} title="Your week" aside={<span className="text-xs text-muted-foreground">active minutes</span>} />
-      <div className="relative h-44">
+      <div className="relative h-36">
         <div className="absolute inset-x-0 border-t border-dashed border-chart-5" style={{ bottom: `${(goal / max) * 100}%` }}>
           <span className="absolute -top-2 left-0 z-10 rounded-full bg-card px-1.5 text-[0.6rem] leading-4 font-semibold text-chart-5">goal {goal}</span>
         </div>
@@ -362,7 +404,7 @@ function StepCounterCard({ targets, today, pending, data }: { targets: FitnessTa
             : "Waiting for movement…";
 
   return (
-    <Card>
+    <Card className={dense}>
       <SectionTitle icon={Smartphone} title="All-day step counter" />
       <div className="flex items-center gap-4">
         <button
@@ -390,16 +432,19 @@ function StepCounterCard({ targets, today, pending, data }: { targets: FitnessTa
           </p>
         </div>
       </div>
-      <div className="space-y-1.5 rounded-2xl bg-muted/60 p-3 text-xs text-muted-foreground">
+      <details className="text-xs text-muted-foreground">
+        <summary className="w-fit cursor-pointer font-semibold text-primary">How background tracking works</summary>
+        <div className="mt-2 space-y-1.5 rounded-2xl bg-muted/60 p-3">
         <p>
-          <strong className="text-foreground">How background tracking works.</strong> Once a workout starts, it keeps recording
+          Once a workout starts, it keeps recording
           on every Dovie screen, survives a closed app, and is saved even if you&apos;re offline.
         </p>
         <p>
           Browsers switch off GPS and motion sensors while a web app is closed or the screen is off, so distance and steps are
           measured while Dovie is open. Install Dovie to your home screen and the screen stays awake during workouts.
         </p>
-      </div>
+        </div>
+      </details>
     </Card>
   );
 }
@@ -417,7 +462,7 @@ function RecordsCard({ data }: { data: FitnessOverview }) {
   ].filter(Boolean) as { label: string; value: string; when: string; id: string }[];
 
   return (
-    <Card>
+    <Card className={dense}>
       <SectionTitle icon={Medal} title="Personal bests" />
       {rows.length === 0 ? (
         <EmptyState title="Your first workout sets the bar." detail="Records appear here as you move." />
@@ -427,13 +472,13 @@ function RecordsCard({ data }: { data: FitnessOverview }) {
             const def = activity(row.id);
             const Icon = def.icon;
             return (
-              <li key={row.label} className="flex items-center gap-3 py-2.5">
-                <span className="flex size-9 items-center justify-center rounded-full text-white" style={{ background: `hsl(${def.hue} 70% 58%)` }}>
+              <li key={row.label} className="flex items-center gap-3 py-2">
+                <span className="flex size-8 items-center justify-center rounded-full text-white" style={{ background: `hsl(${def.hue} 70% 58%)` }}>
                   <Icon className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-xs text-muted-foreground">{row.label}</span>
-                  <span className="block font-serif text-lg leading-tight tabular-nums">{row.value}</span>
+                  <span className="block font-serif text-base leading-tight tabular-nums">{row.value}</span>
                 </span>
                 <span className="text-xs text-muted-foreground">{formatDate(row.when, { day: "numeric", month: "short" })}</span>
               </li>
@@ -449,7 +494,7 @@ function MixCard({ data, today }: { data: FitnessOverview; today: string }) {
   const mix = activityMix(data, today);
   const total = mix.reduce((s, m) => s + m.minutes, 0);
   return (
-    <Card>
+    <Card className={dense}>
       <SectionTitle icon={Zap} title="Last 30 days" aside={<span className="text-xs text-muted-foreground">{Math.round(total)} min total</span>} />
       {mix.length === 0 ? (
         <EmptyState title="Nothing recorded yet." detail="Your mix of walks, runs and the rest will show here." />
@@ -460,7 +505,7 @@ function MixCard({ data, today }: { data: FitnessOverview; today: string }) {
               <div key={m.id} style={{ width: `${(m.minutes / total) * 100}%`, background: `hsl(${activity(m.id).hue} 70% 60%)` }} />
             ))}
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {mix.map((m) => {
               const def = activity(m.id);
               const Icon = def.icon;
@@ -487,10 +532,9 @@ function MixCard({ data, today }: { data: FitnessOverview; today: string }) {
 
 function History({ data, today, onMessage }: { data: FitnessOverview; today: string; onMessage: (m: string) => void }) {
   const [showAll, setShowAll] = useState(false);
-  const list = showAll ? data.sessions : data.sessions.slice(0, 8);
+  const list = showAll ? data.sessions : data.sessions.slice(0, 6);
   return (
-    <div className="ruled">
-      <Card>
+    <Card className={dense}>
         <SectionTitle icon={Route} title="Workout history" aside={<span className="text-xs text-muted-foreground">{data.sessions.length} in 4 months</span>} />
         {data.sessions.length === 0 ? (
           <EmptyState title="No workouts yet." detail="Pick an activity above and press start. Dovie handles the rest." />
@@ -501,13 +545,12 @@ function History({ data, today, onMessage }: { data: FitnessOverview; today: str
             ))}
           </ul>
         )}
-        {data.sessions.length > 8 && (
+        {data.sessions.length > 6 && (
           <Button variant="ghost" size="sm" className="w-fit" onClick={() => setShowAll((v) => !v)}>
             {showAll ? "Show fewer" : `Show all ${data.sessions.length}`}
           </Button>
         )}
-      </Card>
-    </div>
+    </Card>
   );
 }
 
@@ -529,10 +572,10 @@ function SessionRow({ s, today, onMessage }: { s: Session; today: string; onMess
   const when = relativeDay(s.session_date, today);
 
   return (
-    <li className="py-3">
+    <li className="py-2">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center gap-3 text-left">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl text-white" style={{ background: `linear-gradient(135deg, hsl(${def.hue} 72% 55%), hsl(${def.hue + 35} 78% 62%))` }}>
-          <Icon className="size-5" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: `linear-gradient(135deg, hsl(${def.hue} 72% 55%), hsl(${def.hue + 35} 78% 62%))` }}>
+          <Icon className="size-4" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">
@@ -553,7 +596,7 @@ function SessionRow({ s, today, onMessage }: { s: Session; today: string; onMess
       </button>
 
       {open && (
-        <div className="animate-rise mt-3 space-y-3 pl-14">
+        <div className="animate-rise mt-2.5 space-y-2.5 pl-12">
           <dl className="grid grid-cols-3 gap-2 text-xs sm:grid-cols-4">
             {[
               ["Calories", `${s.calories} kcal`],
@@ -646,12 +689,12 @@ function BodyCard({ data, today, profileId, onMessage }: { data: FitnessOverview
   }
 
   return (
-    <Card>
+    <Card className={dense}>
       <SectionTitle icon={Scale} title="Body" aside={<span className="text-xs text-muted-foreground">used for calorie estimates</span>} />
-      <div className="grid gap-5 md:grid-cols-[1fr_1.4fr]">
+      <div className="grid gap-4 sm:grid-cols-[1fr_1.2fr]">
         <div className="space-y-3">
           <div className="flex items-end gap-4">
-            <p className="font-serif text-5xl leading-none tabular-nums">
+            <p className="font-serif text-4xl leading-none tabular-nums">
               {latest ?? "–"}
               <span className="ml-1 font-sans text-sm text-muted-foreground">kg</span>
             </p>
@@ -678,7 +721,7 @@ function BodyCard({ data, today, profileId, onMessage }: { data: FitnessOverview
         </div>
         <div className="flex items-center">
           {spark ? (
-            <svg viewBox={`0 -4 ${W} ${H + 8}`} className="h-24 w-full" aria-label="Weight trend" preserveAspectRatio="none">
+            <svg viewBox={`0 -4 ${W} ${H + 8}`} className="h-20 w-full" aria-label="Weight trend" preserveAspectRatio="none">
               <path d={spark} fill="none" stroke="var(--chart-3)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
             </svg>
           ) : (
