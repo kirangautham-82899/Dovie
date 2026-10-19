@@ -2,8 +2,11 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  // Build time, so each deploy tells crawlers the pages may have changed.
+  const lastModified = new Date();
   const page = (path: string, priority: number, changeFrequency: "weekly" | "monthly" | "yearly") => ({
     url: `${SITE_URL}${path}`,
+    lastModified,
     changeFrequency,
     priority,
   });
