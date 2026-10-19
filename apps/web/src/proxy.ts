@@ -2,7 +2,20 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Pages anyone can see. "/" (the landing page) is matched exactly below.
-const PUBLIC_PATHS = ["/login", "/signup", "/privacy", "/terms", "/auth", "/manifest.webmanifest"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/signup",
+  "/privacy",
+  "/terms",
+  "/auth",
+  "/manifest.webmanifest",
+  // Public feature guides for search (see features/seo/guides.ts).
+  "/habit-tracker",
+  "/expense-tracker",
+  "/daily-planner",
+  "/mood-tracker",
+  "/private-journal",
+];
 // Signed-in people skip these and go straight to their day.
 const SIGNED_OUT_ONLY = ["/", "/login", "/signup"];
 

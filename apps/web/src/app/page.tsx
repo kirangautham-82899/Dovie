@@ -19,6 +19,7 @@ import {
 import { DoveMark, Logo } from "@/components/logo";
 import { DoveLetter } from "@/components/dove-letter";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { GUIDE_SLUGS, GUIDES, type GuideSlug } from "@/features/seo/guides";
 
 const STEPS = [
   { title: "Pick what matters", body: "Choose the parts of life you want more room for. Skip the rest; it stays out of your way." },
@@ -102,6 +103,7 @@ function Feature({
   title,
   body,
   className = "",
+  guide,
   children,
 }: {
   icon: React.ComponentType<{ className?: string }>;
@@ -109,6 +111,8 @@ function Feature({
   title: string;
   body: string;
   className?: string;
+  /** The public guide page for this feature, linked with its keyword. */
+  guide?: GuideSlug;
   children: React.ReactNode;
 }) {
   return (
@@ -119,6 +123,11 @@ function Feature({
         </span>
         <h3 className="mt-4 font-serif text-2xl">{title}</h3>
         <p className="mt-2 max-w-md text-sm leading-relaxed text-foreground/70">{body}</p>
+        {guide && (
+          <Link href={`/${guide}`} className="mt-2 inline-block text-sm font-semibold text-primary underline-offset-4 hover:underline">
+            {GUIDES[guide].name} →
+          </Link>
+        )}
       </div>
       <div className="mt-auto pt-4 md:group-[.wide]:mt-0 md:group-[.wide]:pt-0">{children}</div>
     </article>
@@ -252,6 +261,7 @@ export default function LandingPage() {
               tint="bg-secondary"
               className="md:col-span-4"
               title="A day that fits"
+              guide="daily-planner"
               body="A daily planner and to-do list with your top three, the rest of the list and an evening check-in. Unfinished tasks roll gently into tomorrow."
             >
               <ul className={`${PANEL} space-y-2.5 text-sm`}>
@@ -273,6 +283,7 @@ export default function LandingPage() {
               tint="bg-lilac"
               className="md:col-span-2"
               title="Small habits"
+              guide="habit-tracker"
               body="Streaks that bend around real life, plus a goal tracker for the bigger things."
             >
               <div className={PANEL}>
@@ -295,6 +306,7 @@ export default function LandingPage() {
               tint="bg-butter"
               className="md:col-span-2"
               title="Money, gently"
+              guide="expense-tracker"
               body="Bills, budgets, savings goals and a month-end forecast, in rupees. No bank login, ever."
             >
               <div className={`${PANEL} flex items-center gap-4`}>
@@ -319,6 +331,7 @@ export default function LandingPage() {
               tint="bg-sky"
               className="md:col-span-2"
               title="A page just for you"
+              guide="private-journal"
               body="A private journal with daily prompts and gratitude, encrypted before it's saved."
             >
               <div className={PANEL}>
@@ -334,6 +347,7 @@ export default function LandingPage() {
               tint="bg-mint"
               className="md:col-span-2"
               title="Rest and care"
+              guide="mood-tracker"
               body="Sleep, water and energy in a few taps, plus a kind focus timer."
             >
               <div className={`${PANEL} flex items-center justify-between`}>
@@ -444,6 +458,18 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+
+      <nav aria-label="Explore Dovie" className="mx-auto w-full max-w-6xl px-5 pb-2">
+        <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-muted-foreground">
+          {GUIDE_SLUGS.map((slug) => (
+            <li key={slug}>
+              <Link href={`/${slug}`} className="hover:text-foreground">
+                {GUIDES[slug].name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <footer className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-5 pt-2 pb-6 text-xs text-muted-foreground">
         <span>© Dovie. The gentle daily planner, habit tracker and budget app. Made for real life.</span>
