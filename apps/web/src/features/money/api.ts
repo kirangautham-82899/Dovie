@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import { addDays } from "@/lib/dates";
 
 export type Expense = { id: string; amount_paise: number; category: string; note: string | null; spent_on: string };
+export type Income = { id: string; amount_paise: number; source: string; note: string | null; received_on: string };
 export type Recurrence = "once" | "weekly" | "monthly" | "yearly";
 export type Bill = {
   id: string;
@@ -28,6 +29,12 @@ export type MoneyState = {
   bills: Bill[];
   budgets: Budget[];
   goals: SavingsGoal[];
+  /** This month's income. */
+  income: Income[];
+  /** Income from the 90 days before this month, to estimate a usual month. */
+  incomeHistory: Income[];
+  /** False until the incomes migration has been applied to the database. */
+  incomeReady: boolean;
 };
 
 function check<T>(r: { data: T | null; error: { message: string } | null }): T {
@@ -35,11 +42,16 @@ function check<T>(r: { data: T | null; error: { message: string } | null }): T {
   return r.data as T;
 }
 
+/** A missing table (migration not applied yet) reads as "no rows" rather than an error. */
+function missingTable(error: { code?: string } | null) {
+  return error?.code === "42P01" || error?.code === "PGRST205";
+}
+
 /** This month's expenses plus every open bill, budget and savings goal. */
 export async function fetchMoney(today: string): Promise<MoneyState> {
   const supabase = createClient();
   const monthStart = `${today.slice(0, 7)}-01`;
-  const [expenses, history, bills, budgets, goals] = await Promise.all([
+  const [expenses, history, bills, budgets, goals, income, incomeHistory] = await Promise.all([
     supabase
       .from("expenses")
       .select("id,amount_paise,category,note,spent_on")
@@ -66,7 +78,23 @@ export async function fetchMoney(today: string): Promise<MoneyState> {
       .select("id,title,target_paise,saved_paise,target_date,created_at")
       .is("deleted_at", null)
       .order("created_at"),
+    supabase
+      .from("incomes")
+      .select("id,amount_paise,source,note,received_on")
+      .is("deleted_at", null)
+      .gte("received_on", monthStart)
+      .lte("received_on", today)
+      .order("received_on", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("incomes")
+      .select("id,amount_paise,source,note,received_on")
+      .is("deleted_at", null)
+      .gte("received_on", addDays(monthStart, -90))
+      .lt("received_on", monthStart),
   ]);
+  const incomeReady = !missingTable(income.error);
+  const incomeRows = (r: typeof income) => (incomeReady ? check(r) : []).map((i) => ({ ...i, amount_paise: Number(i.amount_paise) }));
   return {
     expenses: check(expenses).map((e) => ({ ...e, amount_paise: Number(e.amount_paise) })),
     history: check(history).map((e) => ({ ...e, amount_paise: Number(e.amount_paise) })),
@@ -77,6 +105,9 @@ export async function fetchMoney(today: string): Promise<MoneyState> {
       target_paise: Number(g.target_paise),
       saved_paise: Number(g.saved_paise),
     })),
+    income: incomeRows(income),
+    incomeHistory: incomeRows(incomeHistory),
+    incomeReady,
   };
 }
 
@@ -102,6 +133,18 @@ export async function addExpense(v: { amount_paise: number; category: string; no
 
 export async function deleteExpense(id: string) {
   check(await createClient().from("expenses").update({ deleted_at: new Date().toISOString() }).eq("id", id));
+}
+
+export async function addIncome(v: { amount_paise: number; source: string; note: string; received_on: string }) {
+  check(
+    await createClient()
+      .from("incomes")
+      .insert({ ...v, note: v.note.trim() || null }),
+  );
+}
+
+export async function deleteIncome(id: string) {
+  check(await createClient().from("incomes").update({ deleted_at: new Date().toISOString() }).eq("id", id));
 }
 
 export async function addBill(v: { title: string; amount_paise: number | null; due_date: string; recurrence: Recurrence }) {

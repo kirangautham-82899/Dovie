@@ -23,6 +23,8 @@ export function useMoney(today: string, onError: (message: string) => void) {
     query,
     addExpense: useMoneyMutation(api.addExpense, onError),
     deleteExpense: useMoneyMutation(api.deleteExpense, onError),
+    addIncome: useMoneyMutation(api.addIncome, onError),
+    deleteIncome: useMoneyMutation(api.deleteIncome, onError),
     addBill: useMoneyMutation(api.addBill, onError),
     markPaid: useMoneyMutation(api.markBillPaid, onError),
     deleteBill: useMoneyMutation(api.deleteBill, onError),

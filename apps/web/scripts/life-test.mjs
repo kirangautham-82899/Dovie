@@ -48,6 +48,8 @@ const b = await signUp("b");
 
 // ---------- money ----------
 must(await a.client.from("expenses").insert({ amount_paise: 25000, category: "Food", note: "lunch" }), "insert expense");
+must(await a.client.from("incomes").insert({ amount_paise: 5000000, source: "Salary" }), "insert income");
+check("a zero income is rejected", !!(await a.client.from("incomes").insert({ amount_paise: 0 })).error);
 check("a zero expense is rejected", !!(await a.client.from("expenses").insert({ amount_paise: 0 })).error);
 
 const bill = must(
@@ -113,7 +115,7 @@ check(
 );
 
 // ---------- isolation ----------
-for (const table of ["expenses", "bills", "budgets", "savings_goals", "journal_keys", "journal_entries", "time_blocks", "focus_sessions"]) {
+for (const table of ["expenses", "incomes", "bills", "budgets", "savings_goals", "journal_keys", "journal_entries", "time_blocks", "focus_sessions"]) {
   const { data } = await b.client.from(table).select("*");
   check(`B cannot read A's ${table}`, data?.length === 0);
 }
@@ -126,7 +128,10 @@ check("anonymous users cannot call delete_my_account", !!(await anon.rpc("delete
 
 // ---------- clear + delete ----------
 must(await a.client.rpc("clear_my_data"), "clear_my_data");
-const left = must(await a.client.from("expenses").select("id"), "after clear");
+const left = [
+  ...must(await a.client.from("expenses").select("id"), "after clear"),
+  ...must(await a.client.from("incomes").select("id"), "incomes after clear"),
+];
 const prof = must(await a.client.from("profiles").select("onboarded_at").single(), "profile after clear");
 check("clear_my_data removes records and resets onboarding", left.length === 0 && prof.onboarded_at === null);
 

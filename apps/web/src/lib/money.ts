@@ -32,3 +32,5 @@ export const EXPENSE_CATEGORIES = [
   "Family",
   "Other",
 ] as const;
+
+export const INCOME_SOURCES = ["Salary", "Freelance", "Business", "Gift", "Refund", "Interest", "Other"] as const;

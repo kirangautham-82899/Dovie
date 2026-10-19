@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { SectionTitle } from "@/components/page-header";
 import { formatPaise } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
+import { cn } from "@/lib/utils";
 import type { ForecastSummary } from "@/app/api/insights/money/route";
 import { AskDovie } from "@/components/ask-dovie";
 import type { MoneyState } from "./api";
@@ -62,10 +63,22 @@ function toSummary(f: MoneyForecast, today: string, data: MoneyState): ForecastS
   };
 }
 
-export function MoneyForecastCard({ today, data, forecast: f }: { today: string; data: MoneyState; forecast: MoneyForecast }) {
+export function MoneyForecastCard({
+  today,
+  data,
+  forecast: f,
+  incomePaise,
+}: {
+  today: string;
+  data: MoneyState;
+  forecast: MoneyForecast;
+  /** The month's expected income, when the user logs income. */
+  incomePaise: number | null;
+}) {
   const totalBudget = data.budgets.reduce((s, b) => s + b.monthly_limit_paise, 0);
   const delta = f.lastMonthTotal ? (f.projected - f.lastMonthTotal) / f.lastMonthTotal : null;
   const hasData = f.spentSoFar > 0 || data.history.length > 0;
+  const keep = incomePaise === null ? null : incomePaise - f.projected - f.billsDueThisMonth;
 
   return (
     <Card className="p-4 sm:p-5">
@@ -97,16 +110,13 @@ export function MoneyForecastCard({ today, data, forecast: f }: { today: string;
                   Likely between {approx(f.low)} and {approx(f.high)}
                 </p>
               </div>
-              <dl className="grid grid-cols-2 divide-x border-y text-sm">
-                <div className="py-2.5 pr-3">
-                  <dt className="text-[0.65rem] font-bold tracking-wider text-muted-foreground uppercase">Spent so far</dt>
-                  <dd className="font-serif text-xl">{formatPaise(f.spentSoFar)}</dd>
-                </div>
-                <div className="py-2.5 pl-3">
-                  <dt className="text-[0.65rem] font-bold tracking-wider text-muted-foreground uppercase">Bills still due</dt>
-                  <dd className="font-serif text-xl">{formatPaise(f.billsDueThisMonth)}</dd>
-                </div>
-              </dl>
+              {keep !== null && (
+                <p className={cn("text-sm font-semibold", keep >= 0 ? "text-mint-foreground" : "text-destructive")}>
+                  {keep >= 0
+                    ? `On pace to keep about ${approx(keep)} of your ${approx(incomePaise as number)} income.`
+                    : `On pace to spend ${approx(-keep)} more than you earn this month.`}
+                </p>
+              )}
               {delta !== null && (
                 <p className="flex items-center gap-1.5 text-sm">
                   {delta > 0 ? (

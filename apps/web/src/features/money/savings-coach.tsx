@@ -1,15 +1,14 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Check, Loader2, PiggyBank, RotateCcw, Sparkles, Target, Trophy } from "lucide-react";
+import { Check, ChevronDown, Loader2, PiggyBank, RotateCcw, Sparkles, Target, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ChoicePills } from "@/components/field";
 import { ErrorNote, SectionTitle } from "@/components/page-header";
 import { createStore } from "@/lib/local-store";
-import { formatPaise, rupeesToPaise } from "@/lib/money";
+import { formatPaise } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { SavingsPlan } from "@/lib/savings-plan";
@@ -20,11 +19,11 @@ import { analyseSavings, monthlyCost, type SavingsAnalysis, type SavingsTip } fr
 
 type Focus = SavingsSummary["focus"];
 
-// Income and choices stay on this device. Income is only sent, as a number,
-// when the coach is asked.
-type Prefs = { income: string; focus: Focus; tried: string[] };
-const prefsStore = createStore<Prefs>(() => ({ income: "", focus: "balanced", tried: [] }), "dovie-savings");
-const SERVER_PREFS: Prefs = { income: "", focus: "balanced", tried: [] };
+// Choices stay on this device. Income comes from what the user logs and is only
+// sent, as a number, when the coach is asked.
+type Prefs = { focus: Focus; tried: string[] };
+const prefsStore = createStore<Prefs>(() => ({ focus: "balanced", tried: [] }), "dovie-savings");
+const SERVER_PREFS: Prefs = { focus: "balanced", tried: [] };
 const usePrefs = () => useSyncExternalStore(prefsStore.subscribe, prefsStore.get, () => SERVER_PREFS);
 const setPrefs = (patch: Partial<Prefs>) => prefsStore.set({ ...prefsStore.get(), ...patch });
 
@@ -92,9 +91,9 @@ async function askCoach(payload: SavingsSummary): Promise<SavingsPlan> {
 
 type ShownTip = SavingsTip;
 
-export function SavingsCoach({ today, data }: { today: string; data: MoneyState }) {
+export function SavingsCoach({ today, data, incomePaise }: { today: string; data: MoneyState; incomePaise: number | null }) {
   const prefs = usePrefs();
-  const incomePaise = prefs.income ? rupeesToPaise(prefs.income) : null;
+  const [open, setOpen] = useState(false);
   const f = useMemo(
     () =>
       forecastMoney({ today, month: data.expenses, history: data.history, bills: data.bills, budgets: data.budgets, goals: data.goals }),
@@ -120,13 +119,27 @@ export function SavingsCoach({ today, data }: { today: string; data: MoneyState 
         icon={PiggyBank}
         title="Savings coach"
         aside={
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[0.65rem] font-semibold text-secondary-foreground">
-            <Sparkles className="size-3" /> AI
-          </span>
+          hasData && (
+            <Button size="sm" variant="ghost" aria-expanded={open} onClick={() => setOpen(!open)}>
+              {open ? "Hide" : "Open"}
+              <ChevronDown className={cn("transition-transform", open && "rotate-180")} />
+            </Button>
+          )
         }
       />
 
-      {!hasData ? (
+      {hasData && !open ? (
+        <button type="button" onClick={() => setOpen(true)} className="text-left text-sm text-muted-foreground hover:text-foreground">
+          {potential > 0 ? (
+            <>
+              Dovie spotted about <strong className="text-foreground">{formatPaise(potential)} a month</strong> you could keep.{" "}
+            </>
+          ) : (
+            "Spending looks steady. "
+          )}
+          <span className="font-semibold text-primary">See how →</span>
+        </button>
+      ) : !hasData ? (
         <p className="text-sm text-muted-foreground">
           Log a week or two of expenses and the coach will find where your money quietly slips away, and how much you could keep each month.
         </p>
@@ -173,18 +186,9 @@ export function SavingsCoach({ today, data }: { today: string; data: MoneyState 
               )}
 
               <div className="space-y-3">
-                <label className="block text-xs font-semibold">
-                  Monthly income (optional)
-                  <Input
-                    className="mt-1.5"
-                    inputMode="decimal"
-                    placeholder="e.g. 45,000"
-                    value={prefs.income}
-                    onChange={(e) => setPrefs({ income: e.target.value })}
-                    aria-invalid={!!prefs.income && incomePaise === null}
-                  />
-                  <span className="mt-1 block font-normal text-muted-foreground">Stays on this device. Helps aim for saving 20%.</span>
-                </label>
+                {!incomePaise && (
+                  <p className="text-xs text-muted-foreground">Add your income above and the coach will aim for saving 20% of it.</p>
+                )}
                 <div className="space-y-1.5">
                   <p className="text-xs font-semibold">What kind of plan?</p>
                   <ChoicePills label="Plan focus" options={FOCUS} value={prefs.focus} onChange={(focus) => setPrefs({ focus })} />

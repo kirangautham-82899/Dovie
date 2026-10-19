@@ -190,3 +190,16 @@ export function analyseSavings(data: MoneyState, f: MoneyForecast, incomePaise: 
     potential: final.reduce((s, t) => s + t.monthlySaving, 0),
   };
 }
+
+/**
+ * What this month's income is likely to be: what has come in so far, or the
+ * usual month if more is normally on its way (salary may not have landed yet).
+ * Null when no income has ever been logged.
+ */
+export function expectedIncome(data: Pick<MoneyState, "income" | "incomeHistory">): number | null {
+  const soFar = data.income.reduce((s, i) => s + i.amount_paise, 0);
+  const months = new Set(data.incomeHistory.map((i) => i.received_on.slice(0, 7))).size;
+  const usual = months > 0 ? data.incomeHistory.reduce((s, i) => s + i.amount_paise, 0) / months : 0;
+  const best = Math.max(soFar, Math.round(usual));
+  return best > 0 ? best : null;
+}
