@@ -16,6 +16,7 @@
     "test:forecast": "node --no-warnings scripts/forecast-test.mjs",
     "test:predict": "node --no-warnings scripts/predict-test.mjs",
     "test:tracker": "node --no-warnings scripts/tracker-test.mjs",
+    "test:mood-money": "node --no-warnings scripts/mood-money-test.mjs",
     "icons": "node --no-warnings scripts/generate-favicons.mjs"
   },
   "dependencies": {

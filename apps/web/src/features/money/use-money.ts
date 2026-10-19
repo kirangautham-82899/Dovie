@@ -41,3 +41,8 @@ export function useBillsDue(today: string, onError: (message: string) => void) {
   const markPaid = useMoneyMutation(api.markBillPaid, onError);
   return { query, markPaid };
 }
+
+/** Check-in feelings for Mood × Money. Refreshes when a check-in is saved. */
+export function useFeelings(today: string) {
+  return useQuery({ queryKey: ["checkin", today, "feelings"], queryFn: () => api.fetchFeelings(today) });
+}

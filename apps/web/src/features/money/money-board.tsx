@@ -17,6 +17,7 @@ import { useMoney } from "./use-money";
 import { FORECAST_STATUS, MoneyForecastCard } from "./money-forecast";
 import { forecastMoney } from "./forecast";
 import { SavingsCoach } from "./savings-coach";
+import { MoodMoneyCard } from "./mood-money-card";
 import { expectedIncome } from "./savings";
 
 type Dialog = null | "income" | "expense" | "bill" | "budget" | "goal" | { savingsFor: string; title: string };
@@ -248,6 +249,10 @@ export function MoneyBoard({ today }: { today: string }) {
       <div className="mt-8 space-y-5">
         <Slip>
           <MoneyForecastCard today={today} data={data} forecast={f} incomePaise={expected} />
+        </Slip>
+
+        <Slip>
+          <MoodMoneyCard today={today} data={data} />
         </Slip>
 
         <div className="grid items-start gap-5 lg:grid-cols-2">

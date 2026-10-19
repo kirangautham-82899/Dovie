@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { addDays } from "@/lib/dates";
+import type { DayFeeling } from "./mood-money";
 
 export type Expense = { id: string; amount_paise: number; category: string; note: string | null; spent_on: string };
 export type Income = { id: string; amount_paise: number; source: string; note: string | null; received_on: string };
@@ -181,4 +182,20 @@ export async function addSavings(id: string, amount_paise: number) {
 
 export async function deleteSavingsGoal(id: string) {
   check(await createClient().from("savings_goals").update({ deleted_at: new Date().toISOString() }).eq("id", id));
+}
+
+/** Mood, energy and sleep from check-ins since the start of the money history window. */
+export async function fetchFeelings(today: string): Promise<DayFeeling[]> {
+  const from = addDays(`${today.slice(0, 7)}-01`, -90);
+  const r = await createClient()
+    .from("checkins")
+    .select("checkin_date,mood,energy,sleep_hours")
+    .gte("checkin_date", from)
+    .lte("checkin_date", today);
+  return check(r).map((c) => ({
+    date: c.checkin_date,
+    mood: c.mood,
+    energy: c.energy,
+    sleep: c.sleep_hours === null ? null : Number(c.sleep_hours),
+  }));
 }
