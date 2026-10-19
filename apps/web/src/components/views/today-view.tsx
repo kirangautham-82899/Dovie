@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BookHeart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader, SectionTitle } from "@/components/page-header";
+import { Paper, Slip } from "@/components/notebook";
 import type { Profile } from "@/features/settings/api";
 import { TasksSection } from "@/features/tasks/tasks-section";
 import { FitnessToday } from "@/features/fitness/fitness-today";
@@ -21,16 +22,6 @@ function greeting(timeZone: string) {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
-}
-
-/** The Today screen is one dot-grid notebook page. */
-function Paper({ children }: { children: React.ReactNode }) {
-  return <div className="dot-paper p-4 sm:p-8">{children}</div>;
-}
-
-/** A loose slip of paper for the smaller cards that sit on the page. */
-function Slip({ children }: { children: React.ReactNode }) {
-  return <div className="border bg-card/95 shadow-sm">{children}</div>;
 }
 
 export function TodayView() {

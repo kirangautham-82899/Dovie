@@ -115,7 +115,7 @@ export function SavingsCoach({ today, data }: { today: string; data: MoneyState 
     setPrefs({ tried: prefs.tried.includes(title) ? prefs.tried.filter((t) => t !== title) : [...prefs.tried, title].slice(-40) });
 
   return (
-    <Card className="lg:col-span-2">
+    <Card className="p-4 sm:p-5">
       <SectionTitle
         icon={PiggyBank}
         title="Savings coach"
@@ -132,11 +132,11 @@ export function SavingsCoach({ today, data }: { today: string; data: MoneyState 
         </p>
       ) : (
         <>
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
+          <div className="grid gap-5 lg:grid-cols-[1fr_1.3fr]">
             <div className="space-y-4">
-              <div className="rounded-3xl bg-blush p-5">
+              <div className="rounded-3xl bg-blush p-4">
                 <p className="text-xs text-muted-foreground">{plan ? "Your personal plan could save" : "Dovie spotted room to save"}</p>
-                <p className="font-serif text-5xl leading-none tracking-tight">
+                <p className="font-serif text-4xl leading-none tracking-tight">
                   {formatPaise(potential)}
                   <span className="ml-1 font-sans text-sm text-muted-foreground">/ month</span>
                 </p>
@@ -282,8 +282,6 @@ export function SavingsCoach({ today, data }: { today: string; data: MoneyState 
           </div>
         </>
       )}
-
-      <p className="text-[0.7rem] text-muted-foreground">Ideas for everyday spending from your own entries. Not financial advice.</p>
     </Card>
   );
 }

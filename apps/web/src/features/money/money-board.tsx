@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CategoryDonut } from "@/components/charts";
 import { CalendarClock, PiggyBank, Plus, ReceiptText, Target, Trash2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { StatTile } from "@/components/stat-tile";
+import { Slip, Sticky, StickyValue } from "@/components/notebook";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/modal";
 import { Field, selectClass } from "@/components/field";
-import { EmptyState, ErrorNote, SectionTitle } from "@/components/page-header";
+import { EmptyState, ErrorNote, PageHeader, SectionTitle } from "@/components/page-header";
 import { EXPENSE_CATEGORIES, formatPaise, rupeesToPaise } from "@/lib/money";
 import { addDays, daysBetween, formatDate, relativeDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { Recurrence } from "./api";
 import { useMoney } from "./use-money";
-import { MoneyForecastCard } from "./money-forecast";
+import { FORECAST_STATUS, MoneyForecastCard } from "./money-forecast";
+import { forecastMoney } from "./forecast";
 import { SavingsCoach } from "./savings-coach";
 
 type Dialog = null | "expense" | "bill" | "budget" | "goal" | { savingsFor: string; title: string };
@@ -40,17 +41,85 @@ function Progress({ value, over = false }: { value: number; over?: boolean }) {
   );
 }
 
+/** Header copy, shared with the loading skeleton so the page doesn't jump. */
+export const MONEY_HEADER = {
+  eyebrow: "money, gently",
+  title: "Know where you",
+  accent: "stand.",
+};
+
+/** Cards on the money page are a little tighter than the default. */
+const dense = "p-4 sm:p-5";
+
+/** Sticky notes show whole rupees; the lists below keep the paise. */
+const whole = (paise: number) => formatPaise(Math.round(paise / 100) * 100);
+
+function StatusPill({ status }: { status: keyof typeof FORECAST_STATUS }) {
+  const s = FORECAST_STATUS[status];
+  return <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold", s.className)}>{s.label}</span>;
+}
+
 export function MoneyBoard({ today }: { today: string }) {
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
   const m = useMoney(today, setError);
   const close = () => setDialog(null);
+  const data = m.query.data;
+  const f = useMemo(
+    () =>
+      data &&
+      forecastMoney({
+        today,
+        month: data.expenses,
+        history: data.history,
+        bills: data.bills,
+        budgets: data.budgets,
+        goals: data.goals,
+      }),
+    [today, data],
+  );
+  const monthName = formatDate(today, { month: "long" });
 
-  if (m.query.isPending) return <p className="text-sm text-muted-foreground">Gathering your numbers…</p>;
-  if (m.query.isError)
-    return <ErrorNote message={`Could not load your money: ${m.query.error.message}`} onRetry={() => m.query.refetch()} />;
+  const header = (
+    <PageHeader
+      compact
+      {...MONEY_HEADER}
+      eyebrow={`money, gently · ${monthName}`}
+      action={
+        <>
+          <Button size="sm" onClick={() => setDialog("expense")}>
+            <Plus /> Expense
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => setDialog("bill")}>
+            Bill
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => setDialog("budget")}>
+            Budget
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => setDialog("goal")}>
+            Goal
+          </Button>
+        </>
+      }
+    />
+  );
 
-  const { expenses, bills, budgets, goals } = m.query.data;
+  if (m.query.isPending)
+    return (
+      <>
+        {header}
+        <p className="text-sm text-muted-foreground">Gathering your numbers…</p>
+      </>
+    );
+  if (m.query.isError || !data || !f)
+    return (
+      <>
+        {header}
+        <ErrorNote message={`Could not load your money: ${m.query.error?.message}`} onRetry={() => m.query.refetch()} />
+      </>
+    );
+
+  const { expenses, bills, budgets, goals } = data;
   const spent = expenses.reduce((s, e) => s + e.amount_paise, 0);
   const upcoming = bills.filter((b) => daysBetween(today, b.due_date) <= 30);
   const upcomingTotal = upcoming.reduce((s, b) => s + (b.amount_paise ?? 0), 0);
@@ -60,228 +129,265 @@ export function MoneyBoard({ today }: { today: string }) {
   const byCategory = new Map<string, number>();
   for (const e of expenses) byCategory.set(e.category, (byCategory.get(e.category) ?? 0) + e.amount_paise);
   const categories = [...byCategory.entries()].sort((a, b) => b[1] - a[1]);
-  const monthName = formatDate(today, { month: "long" });
+  const budgetTotal = budgets.reduce((s, b) => s + b.monthly_limit_paise, 0);
+  const budgetUsed = budgets.reduce((s, b) => s + (byCategory.get(b.category) ?? 0), 0);
+  const outlook = new Map(f.categories.map((c) => [c.category, c.status]));
+  const goalForecast = new Map(f.goals.map((g) => [g.id, g]));
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={() => setDialog("expense")}>
-          <Plus /> Add expense
-        </Button>
-        <Button variant="secondary" onClick={() => setDialog("bill")}>
-          Add a bill
-        </Button>
-        <Button variant="secondary" onClick={() => setDialog("budget")}>
-          Set a budget
-        </Button>
-        <Button variant="secondary" onClick={() => setDialog("goal")}>
-          Make a money goal
-        </Button>
-      </div>
+    <>
+      {header}
 
-      {error && <ErrorNote message={error} />}
+      {error && (
+        <div className="mb-4">
+          <ErrorNote message={error} />
+        </div>
+      )}
 
-      <div className="ruled sm:grid-cols-3">
-        <StatTile
-          label="Spent this month"
-          value={formatPaise(spent)}
-          caption={`From expenses you added in ${monthName}`}
-          tone="rose"
+      <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:gap-x-5 md:grid-cols-4">
+        <Sticky
+          label="Spent"
           icon={ReceiptText}
-        />
-        <StatTile
-          label="Bills coming up"
-          value={formatPaise(upcomingTotal)}
-          caption={`${upcoming.length} in the next 30 days`}
-          tone="peach"
+          caption={`so far in ${monthName}`}
+          tilt="-rotate-1 [--tape-tilt:-4deg]"
+          tone="bg-secondary text-secondary-foreground"
+        >
+          <StickyValue value={whole(spent)} className="text-3xl sm:text-4xl" />
+        </Sticky>
+        <Sticky
+          label="Bills"
           icon={CalendarClock}
-        />
-        <StatTile
-          label="A little saved"
-          value={formatPaise(saved)}
-          caption={target ? `of ${formatPaise(target)} across your money goals` : "Across your money goals"}
-          tone="lilac"
+          caption={upcoming.length ? `${upcoming.length} in the next 30 days` : "nothing due soon"}
+          tilt="rotate-1 [--tape-tilt:3deg]"
+          tone="bg-butter text-butter-foreground"
+        >
+          <StickyValue value={whole(upcomingTotal)} className="text-3xl sm:text-4xl" />
+        </Sticky>
+        <Sticky
+          label="Budgets"
+          icon={Target}
+          caption={budgetTotal ? `${whole(Math.max(0, budgetTotal - budgetUsed))} left` : "set one when ready"}
+          tilt="-rotate-[0.5deg] [--tape-tilt:-2deg]"
+          tone="bg-sky text-sky-foreground"
+        >
+          <StickyValue
+            value={budgetTotal ? `${Math.round((budgetUsed / budgetTotal) * 100)}%` : "–"}
+            unit={budgetTotal ? "used" : undefined}
+            className="text-3xl sm:text-4xl"
+          />
+        </Sticky>
+        <Sticky
+          label="Saved"
           icon={PiggyBank}
-        />
+          caption={target ? `of ${whole(target)} in goals` : "a little adds up"}
+          tilt="rotate-[1.5deg] [--tape-tilt:4deg]"
+          tone="bg-mint text-mint-foreground"
+        >
+          <StickyValue value={whole(saved)} className="text-3xl sm:text-4xl" />
+        </Sticky>
       </div>
 
-      <div className="ruled lg:grid-cols-2">
-        <MoneyForecastCard today={today} data={m.query.data} />
-        <SavingsCoach today={today} data={m.query.data} />
-        <Card>
-          <SectionTitle icon={CalendarClock} title="Bills & regular things" />
-          {bills.length === 0 ? (
-            <EmptyState title="Bills, when you're ready" detail="Add due dates so you can see what's coming, all in one place." />
-          ) : (
-            <ul className="divide-y">
-              {bills.map((b) => {
-                const overdue = b.due_date < today;
-                return (
-                  <li key={b.id} className="group flex items-center gap-3 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{b.title}</p>
-                      <p className={cn("text-xs", overdue ? "text-destructive" : "text-muted-foreground")}>
-                        {formatDate(b.due_date, { day: "numeric", month: "short" })} · {relativeDay(b.due_date, today)} ·{" "}
-                        {RECURRENCE_LABEL[b.recurrence]}
-                      </p>
+      <div className="mt-8 space-y-5">
+        <Slip>
+          <MoneyForecastCard today={today} data={data} forecast={f} />
+        </Slip>
+
+        <div className="grid items-start gap-5 lg:grid-cols-2">
+          <div className="min-w-0 space-y-5">
+            <Slip>
+              <Card className={dense}>
+                <SectionTitle icon={CalendarClock} title="Bills & regular things" />
+                {bills.length === 0 ? (
+                  <EmptyState title="Bills, when you're ready" detail="Add due dates so you can see what's coming, all in one place." />
+                ) : (
+                  <ul className="divide-y">
+                    {bills.map((b) => {
+                      const overdue = b.due_date < today;
+                      return (
+                        <li key={b.id} className="group flex items-center gap-2 py-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{b.title}</p>
+                            <p className={cn("text-xs", overdue ? "text-destructive" : "text-muted-foreground")}>
+                              {formatDate(b.due_date, { day: "numeric", month: "short" })} · {relativeDay(b.due_date, today)} ·{" "}
+                              {RECURRENCE_LABEL[b.recurrence]}
+                            </p>
+                          </div>
+                          {b.amount_paise !== null && <span className="text-sm">{formatPaise(b.amount_paise)}</span>}
+                          <Button size="xs" variant="outline" onClick={() => m.markPaid.mutate(b.id)} disabled={m.markPaid.isPending}>
+                            Paid
+                          </Button>
+                          <Button
+                            size="icon-xs"
+                            variant="ghost"
+                            aria-label={`Remove ${b.title}`}
+                            onClick={() => confirm(`Remove "${b.title}"?`) && m.deleteBill.mutate(b.id)}
+                            className="opacity-60 group-hover:opacity-100"
+                          >
+                            <Trash2 />
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </Card>
+            </Slip>
+
+            <Slip>
+              <Card className={dense}>
+                <SectionTitle icon={Target} title="Monthly budgets" />
+                {budgets.length === 0 ? (
+                  <EmptyState title="Budgets without judgment" detail="Set a monthly boundary that works for you." />
+                ) : (
+                  <ul className="space-y-3">
+                    {budgets.map((b) => {
+                      const used = byCategory.get(b.category) ?? 0;
+                      const ratio = used / b.monthly_limit_paise;
+                      const status = outlook.get(b.category);
+                      return (
+                        <li key={b.id} className="group space-y-1.5">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="min-w-0 flex-1 truncate font-medium">{b.category}</span>
+                            {status && status !== "no-budget" && <StatusPill status={status} />}
+                            <span className="text-xs text-muted-foreground">
+                              {formatPaise(used)} of {formatPaise(b.monthly_limit_paise)}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={`Remove ${b.category} budget`}
+                              onClick={() => m.deleteBudget.mutate(b.id)}
+                              className="rounded p-1 text-muted-foreground opacity-60 hover:bg-muted group-hover:opacity-100"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                          <Progress value={ratio} over={ratio > 1} />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </Card>
+            </Slip>
+
+            <Slip>
+              <Card className={dense}>
+                <SectionTitle icon={PiggyBank} title="Money goals" />
+                {goals.length === 0 ? (
+                  <EmptyState title="Something to look forward to" detail="A money goal can be tiny or far away." />
+                ) : (
+                  <ul className="space-y-3">
+                    {goals.map((g) => {
+                      const gf = goalForecast.get(g.id);
+                      return (
+                        <li key={g.id} className="group space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">{g.title}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatPaise(g.saved_paise)} of {formatPaise(g.target_paise)}
+                                {g.target_date && ` · by ${formatDate(g.target_date, { day: "numeric", month: "short", year: "numeric" })}`}
+                                {gf?.eta && gf.status !== "done" && ` · ~${formatDate(gf.eta, { month: "short", year: "numeric" })}`}
+                              </p>
+                            </div>
+                            {gf && gf.status !== "no-data" && <StatusPill status={gf.status} />}
+                            <Button size="xs" variant="secondary" onClick={() => setDialog({ savingsFor: g.id, title: g.title })}>
+                              <Plus /> Add
+                            </Button>
+                            <button
+                              type="button"
+                              aria-label={`Remove ${g.title}`}
+                              onClick={() => confirm(`Remove "${g.title}"?`) && m.deleteGoal.mutate(g.id)}
+                              className="rounded p-1 text-muted-foreground opacity-60 hover:bg-muted group-hover:opacity-100"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                          <Progress value={g.saved_paise / g.target_paise} />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </Card>
+            </Slip>
+          </div>
+
+          <div className="min-w-0 space-y-5">
+            <Slip>
+              <Card className={dense}>
+                <SectionTitle icon={Wallet} title="Where it went" />
+                {categories.length === 0 ? (
+                  <EmptyState title="A picture will emerge" detail="Add a few expenses to see your own spending mix." />
+                ) : (
+                  <div className="flex flex-col items-center gap-4 sm:flex-row">
+                    <div className="size-32 shrink-0" aria-hidden>
+                      <CategoryDonut data={categories.map(([name, value]) => ({ name, value }))} colors={CHART_COLORS} />
                     </div>
-                    {b.amount_paise !== null && <span className="text-sm">{formatPaise(b.amount_paise)}</span>}
-                    <Button size="sm" variant="outline" onClick={() => m.markPaid.mutate(b.id)} disabled={m.markPaid.isPending}>
-                      Mark paid
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label={`Remove ${b.title}`}
-                      onClick={() => confirm(`Remove "${b.title}"?`) && m.deleteBill.mutate(b.id)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Card>
-
-        <Card>
-          <SectionTitle icon={ReceiptText} title="Recent spending" />
-          {expenses.length === 0 ? (
-            <EmptyState
-              title="Your spending, without the guesswork"
-              detail="Add expenses as they happen. Dovie doesn't connect to banks."
-            />
-          ) : (
-            <ul className="max-h-80 divide-y overflow-y-auto">
-              {expenses.slice(0, 30).map((e) => (
-                <li key={e.id} className="group flex items-center gap-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm">{e.note || e.category}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {e.category} · {formatDate(e.spent_on, { day: "numeric", month: "short" })}
-                    </p>
+                    <ul className="w-full space-y-1 text-sm">
+                      {categories.map(([name, value], i) => (
+                        <li key={name} className="flex items-center gap-2">
+                          <span
+                            className="size-2.5 shrink-0 rounded-full"
+                            style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
+                            aria-hidden
+                          />
+                          <span className="flex-1">{name}</span>
+                          <span className="text-muted-foreground">{Math.round((value / spent) * 100)}%</span>
+                          <span className="w-20 text-right">{formatPaise(value)}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <span className="text-sm font-medium">{formatPaise(e.amount_paise)}</span>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label="Remove expense"
-                    onClick={() => m.deleteExpense.mutate(e.id)}
-                    className="opacity-60 group-hover:opacity-100"
-                  >
-                    <Trash2 />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+                )}
+              </Card>
+            </Slip>
 
-        <Card>
-          <SectionTitle icon={Wallet} title="Where it went" />
-          {categories.length === 0 ? (
-            <EmptyState title="A picture will emerge" detail="Add a few expenses to see your own spending mix." />
-          ) : (
-            <div className="flex flex-col items-center gap-4 sm:flex-row">
-              <div className="size-40 shrink-0" aria-hidden>
-                <CategoryDonut data={categories.map(([name, value]) => ({ name, value }))} colors={CHART_COLORS} />
-              </div>
-              <ul className="w-full space-y-1.5 text-sm">
-                {categories.map(([name, value], i) => (
-                  <li key={name} className="flex items-center gap-2">
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
-                      aria-hidden
-                    />
-                    <span className="flex-1">{name}</span>
-                    <span className="text-muted-foreground">{Math.round((value / spent) * 100)}%</span>
-                    <span className="w-24 text-right">{formatPaise(value)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </Card>
-
-        <Card>
-          <SectionTitle icon={Target} title="Monthly budgets" />
-          {budgets.length === 0 ? (
-            <EmptyState title="Budgets without judgment" detail="Set a monthly boundary that works for you." />
-          ) : (
-            <ul className="space-y-4">
-              {budgets.map((b) => {
-                const used = byCategory.get(b.category) ?? 0;
-                const ratio = used / b.monthly_limit_paise;
-                return (
-                  <li key={b.id} className="group space-y-1.5">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{b.category}</span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        {formatPaise(used)} of {formatPaise(b.monthly_limit_paise)}
-                        <button
-                          type="button"
-                          aria-label={`Remove ${b.category} budget`}
-                          onClick={() => m.deleteBudget.mutate(b.id)}
-                          className="rounded p-1 opacity-60 hover:bg-muted group-hover:opacity-100"
+            <Slip>
+              <Card className={dense}>
+                <SectionTitle icon={ReceiptText} title="Recent spending" />
+                {expenses.length === 0 ? (
+                  <EmptyState
+                    title="Your spending, without the guesswork"
+                    detail="Add expenses as they happen. Dovie doesn't connect to banks."
+                  />
+                ) : (
+                  <ul className="max-h-72 divide-y overflow-y-auto">
+                    {expenses.slice(0, 30).map((e) => (
+                      <li key={e.id} className="group flex items-center gap-2 py-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm">{e.note || e.category}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {e.category} · {formatDate(e.spent_on, { day: "numeric", month: "short" })}
+                          </p>
+                        </div>
+                        <span className="text-sm font-medium">{formatPaise(e.amount_paise)}</span>
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          aria-label="Remove expense"
+                          onClick={() => m.deleteExpense.mutate(e.id)}
+                          className="opacity-60 group-hover:opacity-100"
                         >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </span>
-                    </div>
-                    <Progress value={ratio} over={ratio > 1} />
-                    {ratio > 1 ? (
-                      <p className="text-xs text-muted-foreground">
-                        A little over this month. That happens; next month is a fresh page.
-                      </p>
-                    ) : ratio >= 0.8 ? (
-                      <p className="text-xs text-muted-foreground">Getting close. A gentle heads-up.</p>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Card>
+                          <Trash2 />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </Slip>
+          </div>
+        </div>
 
-        <Card className="lg:col-span-2">
-          <SectionTitle icon={PiggyBank} title="Money goals" />
-          {goals.length === 0 ? (
-            <EmptyState title="Something to look forward to" detail="A money goal can be tiny or far away." />
-          ) : (
-            <ul className="ruled sm:[&>li:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-2">
-              {goals.map((g) => (
-                <li key={g.id} className="group space-y-2 p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium">{g.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatPaise(g.saved_paise)} of {formatPaise(g.target_paise)}
-                        {g.target_date && ` · by ${formatDate(g.target_date, { day: "numeric", month: "short", year: "numeric" })}`}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label={`Remove ${g.title}`}
-                      onClick={() => confirm(`Remove "${g.title}"?`) && m.deleteGoal.mutate(g.id)}
-                      className="rounded p-1 text-muted-foreground opacity-60 hover:bg-muted group-hover:opacity-100"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </div>
-                  <Progress value={g.saved_paise / g.target_paise} />
-                  <Button size="sm" variant="secondary" onClick={() => setDialog({ savingsFor: g.id, title: g.title })}>
-                    Add savings
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        <Slip>
+          <SavingsCoach today={today} data={data} />
+        </Slip>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Dovie is for tracking only and is not financial advice. It never connects to your bank, cards or messages.
+      <p className="mt-5 text-xs text-muted-foreground">
+        For tracking and planning only, not financial advice. Forecasts are estimates from your own entries. Dovie never
+        connects to your bank, cards or messages.
       </p>
 
       <Modal open={dialog === "expense"} title="Add an expense" onClose={close}>
@@ -309,7 +415,7 @@ export function MoneyBoard({ today }: { today: string }) {
           }
         />
       </Modal>
-    </div>
+    </>
   );
 }
 

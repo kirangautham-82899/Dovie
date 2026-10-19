@@ -1,19 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
 import { ForecastChart } from "@/components/charts";
-import { PiggyBank, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { SectionTitle } from "@/components/page-header";
 import { formatPaise } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
-import { cn } from "@/lib/utils";
 import type { ForecastSummary } from "@/app/api/insights/money/route";
 import { AskDovie } from "@/components/ask-dovie";
 import type { MoneyState } from "./api";
-import { forecastMoney, type MoneyForecast } from "./forecast";
+import type { MoneyForecast } from "./forecast";
 
-const STATUS: Record<string, { label: string; className: string }> = {
+/** Labels for forecast statuses, also used by the budget and goal lists. */
+export const FORECAST_STATUS = {
   over: { label: "Likely over", className: "bg-destructive/10 text-destructive" },
   tight: { label: "Getting close", className: "bg-[hsl(40_90%_92%)] text-[hsl(32_60%_32%)] dark:bg-[hsl(38_30%_20%)] dark:text-[hsl(44_85%_80%)]" },
   "on-track": { label: "On track", className: "bg-mint text-mint-foreground" },
@@ -21,7 +20,7 @@ const STATUS: Record<string, { label: string; className: string }> = {
   done: { label: "Reached", className: "bg-mint text-mint-foreground" },
   behind: { label: "Behind", className: "bg-[hsl(40_90%_92%)] text-[hsl(32_60%_32%)] dark:bg-[hsl(38_30%_20%)] dark:text-[hsl(44_85%_80%)]" },
   "no-data": { label: "Just started", className: "bg-muted text-muted-foreground" },
-};
+} satisfies Record<string, { label: string; className: string }>;
 
 const CONFIDENCE = {
   low: "Early estimate",
@@ -63,27 +62,13 @@ function toSummary(f: MoneyForecast, today: string, data: MoneyState): ForecastS
   };
 }
 
-export function MoneyForecastCard({ today, data }: { today: string; data: MoneyState }) {
-  const f = useMemo(
-    () =>
-      forecastMoney({
-        today,
-        month: data.expenses,
-        history: data.history,
-        bills: data.bills,
-        budgets: data.budgets,
-        goals: data.goals,
-      }),
-    [today, data],
-  );
-
+export function MoneyForecastCard({ today, data, forecast: f }: { today: string; data: MoneyState; forecast: MoneyForecast }) {
   const totalBudget = data.budgets.reduce((s, b) => s + b.monthly_limit_paise, 0);
   const delta = f.lastMonthTotal ? (f.projected - f.lastMonthTotal) / f.lastMonthTotal : null;
   const hasData = f.spentSoFar > 0 || data.history.length > 0;
-  const budgeted = f.categories.filter((c) => c.status !== "no-budget");
 
   return (
-    <Card className="lg:col-span-2">
+    <Card className="p-4 sm:p-5">
       <SectionTitle
         icon={Sparkles}
         title="Month-end forecast"
@@ -101,13 +86,13 @@ export function MoneyForecastCard({ today, data }: { today: string; data: MoneyS
         </p>
       ) : (
         <>
-          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.4fr]">
-            <div className="space-y-4">
+          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.4fr]">
+            <div className="space-y-3">
               <div>
                 <p className="text-xs text-muted-foreground">
                   On pace to spend by {formatDate(f.monthEnd, { day: "numeric", month: "short" })}
                 </p>
-                <p className="font-serif text-5xl leading-none tracking-tight">{approx(f.projected)}</p>
+                <p className="font-serif text-4xl leading-none tracking-tight sm:text-5xl">{approx(f.projected)}</p>
                 <p className="mt-1.5 text-xs text-muted-foreground">
                   Likely between {approx(f.low)} and {approx(f.high)}
                 </p>
@@ -138,62 +123,12 @@ export function MoneyForecastCard({ today, data }: { today: string; data: MoneyS
               </p>
             </div>
 
-            <div className="h-52 w-full" aria-hidden>
+            <div className="h-44 w-full lg:h-52" aria-hidden>
               <ForecastChart series={f.series} totalBudget={totalBudget} format={approx} />
             </div>
           </div>
 
-          {(budgeted.length > 0 || f.goals.length > 0) && (
-            <div className="grid gap-6 border-t pt-4 md:grid-cols-2">
-              <div>
-                <p className="mb-2 text-[0.65rem] font-bold tracking-wider text-muted-foreground uppercase">Budget outlook</p>
-                {budgeted.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Set a budget to see which ones need care.</p>
-                ) : (
-                  <ul className="divide-y text-sm">
-                    {budgeted.map((c) => (
-                      <li key={c.category} className="flex items-center gap-2 py-2">
-                        <span className="flex-1">{c.category}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {approx(c.projected)} of {formatPaise(c.limit as number)}
-                        </span>
-                        <span className={cn("rounded-full px-2 py-0.5 text-[0.65rem] font-semibold", STATUS[c.status].className)}>
-                          {STATUS[c.status].label}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div>
-                <p className="mb-2 text-[0.65rem] font-bold tracking-wider text-muted-foreground uppercase">Savings goals</p>
-                {f.goals.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Add a money goal to see when you&apos;ll reach it.</p>
-                ) : (
-                  <ul className="divide-y text-sm">
-                    {f.goals.map((g) => (
-                      <li key={g.id} className="flex items-center gap-2 py-2">
-                        <PiggyBank className="size-4 shrink-0 text-chart-3" />
-                        <span className="min-w-0 flex-1 truncate">{g.title}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {g.status === "done"
-                            ? "Reached"
-                            : g.eta
-                              ? `~${formatDate(g.eta, { month: "short", year: "numeric" })}`
-                              : "Add savings to estimate"}
-                        </span>
-                        <span className={cn("rounded-full px-2 py-0.5 text-[0.65rem] font-semibold", STATUS[g.status].className)}>
-                          {STATUS[g.status].label}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="border-t pt-4">
+          <div className="border-t pt-3">
             <AskDovie
               endpoint="/api/insights/money"
               payload={() => toSummary(f, today, data)}
@@ -203,10 +138,6 @@ export function MoneyForecastCard({ today, data }: { today: string; data: MoneyS
           </div>
         </>
       )}
-
-      <p className="text-[0.7rem] text-muted-foreground">
-        Estimates from your own entries, for planning only. Not financial advice.
-      </p>
     </Card>
   );
 }

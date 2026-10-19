@@ -1,7 +1,7 @@
 "use client";
 
 import { Droplets, Footprints, Timer } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Sticky, StickyValue as Value } from "@/components/notebook";
 import { useTasks } from "@/features/tasks/use-tasks";
 import { useWellness } from "@/features/wellness/use-wellness";
 
@@ -26,45 +26,6 @@ function Ring({ value }: { value: number }) {
         className="transition-[stroke-dashoffset] duration-700"
       />
     </svg>
-  );
-}
-
-/** One pinned note: a tinted square with a strip of tape and a slight tilt. */
-function Sticky({
-  label,
-  icon: Icon,
-  caption,
-  tilt,
-  tone,
-  className,
-  children,
-}: {
-  label: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  caption: string;
-  tilt: string;
-  tone: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={cn("sticky-note tape p-4 pt-5 hover:rotate-0 sm:p-5 sm:pt-6", tone, tilt, className)}>
-      <p className="flex items-center gap-1.5 font-hand text-xl leading-none">
-        {Icon && <Icon className="size-4 opacity-80" />}
-        {label}
-      </p>
-      {children}
-      <p className="mt-1.5 truncate font-hand text-lg leading-none opacity-75">{caption}</p>
-    </div>
-  );
-}
-
-function Value({ value, unit }: { value: React.ReactNode; unit?: string }) {
-  return (
-    <p className="mt-2 font-serif text-4xl leading-none tracking-tight text-foreground">
-      {value}
-      {unit && <span className="ml-1 font-sans text-xs text-muted-foreground">{unit}</span>}
-    </p>
   );
 }
 
