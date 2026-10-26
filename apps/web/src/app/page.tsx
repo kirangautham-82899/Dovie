@@ -44,7 +44,7 @@ const FAQ = [
   },
   {
     q: "Is my journal private?",
-    a: "Yes. Journal entries are encrypted in your browser with AES-256 before they are saved, using a key only your passphrase or recovery key can unlock. Dovie stores only the encrypted text and never uses journal words for insights.",
+    a: "Yes. Your journal pages are saved to your account and can only be read while you are signed in. They are not end-to-end encrypted, and Dovie never uses journal words for insights or ads.",
   },
   {
     q: "Does Dovie predict my spending or my week?",
@@ -57,7 +57,7 @@ const FAQ = [
 ];
 
 const PRIVACY = [
-  { icon: BookLock, title: "Encrypted journal", body: "AES-256 in your browser. Dovie only ever stores ciphertext." },
+  { icon: BookLock, title: "A private journal", body: "Only you can read it when signed in. Never used for insights." },
   { icon: HandCoins, title: "No bank access", body: "Add money by hand. No cards, SMS or statements, ever." },
   { icon: EyeOff, title: "No selling, no ads", body: "Insights use numbers and completions, never your words." },
   { icon: Download, title: "Export or erase", body: "Download everything as JSON, or delete your account in one step." },
@@ -154,7 +154,7 @@ function StructuredData() {
         "Habit tracker with streaks",
         "Expense tracker and budget planner",
         "Month-end spending forecast",
-        "Private encrypted journal",
+        "Private journal",
         "Mood, sleep and water tracker",
         "Focus timer",
         "Weekly review with predictions",
@@ -332,12 +332,12 @@ export default function LandingPage() {
               className="md:col-span-2"
               title="A page just for you"
               guide="private-journal"
-              body="A private journal with daily prompts and gratitude, encrypted before it's saved."
+              body="A private, dot-grid journal with daily prompts and a gratitude line."
             >
               <div className={PANEL}>
-                <p className="truncate font-mono text-[0.68rem] text-muted-foreground">AV3x9kQ2_pLm7hT0wRz8YbN4sUe…</p>
+                <p className="truncate font-serif text-sm text-muted-foreground italic">Slow morning. Good tea. Felt calm…</p>
                 <p className="mt-2.5 flex items-center gap-1.5 text-xs">
-                  <Lock className="size-3.5 text-primary" /> Only you hold the key
+                  <Lock className="size-3.5 text-primary" /> Only you can read it
                 </p>
               </div>
             </Feature>

@@ -4,11 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useOptimisticMutation } from "@/lib/use-optimistic";
 import { addTask, deleteTask, renameTask, setCompleted, setPriority } from "@/features/tasks/api";
 import type { Task } from "@/features/tasks/types";
-import { fetchPlannerMonth, moveTasks } from "./api";
+import { addBlock, deleteBlock, type TimeBlock } from "@/features/calendar/api";
+import { fetchPlannerBlocks, fetchPlannerDay, moveTasks, plannerBlocksKey, plannerDayKey } from "./api";
 
-export function usePlanner(month: string, today: string, onError: (message: string) => void) {
-  const queryKey = ["planner", month];
-  const query = useQuery({ queryKey, queryFn: () => fetchPlannerMonth(month, today) });
+export function usePlanner(day: string, today: string, onError: (message: string) => void) {
+  const queryKey = plannerDayKey(day);
+  const query = useQuery({ queryKey, queryFn: () => fetchPlannerDay(day, today) });
+  const blocks = useQuery({ queryKey: plannerBlocksKey(day), queryFn: () => fetchPlannerBlocks(day) });
 
   const add = useOptimisticMutation<Task[], { title: string; date: string; priority: boolean }>({
     queryKey,
@@ -55,8 +57,24 @@ export function usePlanner(month: string, today: string, onError: (message: stri
     queryKey,
     onError,
     mutate: (v) => moveTasks(v.ids, v.date),
-    apply: (tasks, v) => tasks.map((t) => (v.ids.includes(t.id) ? { ...t, due_date: v.date, is_priority: false } : t)),
+    apply: (tasks, v) => tasks.filter((t) => !v.ids.includes(t.id)),
   });
 
-  return { query, add, toggle, star, rename, remove, move };
+  const addEntry = useOptimisticMutation<TimeBlock[], { title: string; starts_at: string; ends_at: string }>({
+    queryKey: plannerBlocksKey(day),
+    onError,
+    mutate: (v) => addBlock({ ...v, block_date: day }),
+    apply: (list, v) =>
+      [...list, { id: `temp-${Date.now()}`, title: v.title.trim(), block_date: day, starts_at: v.starts_at, ends_at: v.ends_at }].sort((a, b) =>
+        a.starts_at.localeCompare(b.starts_at),
+      ),
+  });
+  const removeEntry = useOptimisticMutation<TimeBlock[], string>({
+    queryKey: plannerBlocksKey(day),
+    onError,
+    mutate: deleteBlock,
+    apply: (list, id) => list.filter((b) => b.id !== id),
+  });
+
+  return { query, blocks, add, toggle, star, rename, remove, move, addEntry, removeEntry };
 }

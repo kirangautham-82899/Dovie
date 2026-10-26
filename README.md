@@ -94,9 +94,7 @@ Dovie's predictions run **in the browser on your own entries**: free, instant an
 ## 🛡️ Privacy & security
 
 - **Row-level security** on every table: each account can only ever reach its own rows, enforced in Postgres.
-- **End-to-end encrypted journal**, implemented to a written spec ([`docs/crypto-spec.md`](docs/crypto-spec.md)):
-  - PBKDF2-SHA256 (600k iterations) → key-encryption key → wraps a random data key → AES-256-GCM per entry, with associated data binding each entry to its owner.
-  - Verified against fixed test vectors.
+- **A private journal**: pages are plain text on the account, readable only by their owner (row-level security) and never used for insights. There is no passphrase. The earlier end-to-end encrypted design is kept for reference in [`docs/crypto-spec.md`](docs/crypto-spec.md).
 - **No bank, card or SMS access.** Money is entered by hand.
 - **Your data, your call:** one-click JSON export, clear-everything and full account deletion (`delete_my_account()` cascades through every table).
 - **Server-only secrets:** the Supabase service-role key is never used, and the Anthropic key never reaches the browser.
@@ -262,7 +260,6 @@ Meta-tag verification also works: set `GOOGLE_SITE_VERIFICATION` and/or `BING_SI
 │   ├── src/app/               Routes: landing, auth, (app) screens, API, SEO files
 │   ├── src/components/        Shell, navigation, hero, charts, shared UI
 │   ├── src/features/          One folder per feature: api.ts, hooks, components
-│   │   ├── journal/crypto.ts  Journal encryption (spec-tested)
 │   │   ├── money/forecast.ts  Spending forecast
 │   │   └── weekly/predict.ts  Next-week predictions
 │   ├── src/lib/               Supabase clients, dates, money, AI helper, site config

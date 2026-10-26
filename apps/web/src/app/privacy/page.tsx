@@ -2,7 +2,7 @@ import { LegalPage } from "@/components/legal-page";
 
 export const metadata = {
   title: "Privacy",
-  description: "How Dovie handles your data: no bank connections, an encrypted journal, export and deletion at any time.",
+  description: "How Dovie handles your data: no bank connections, a private journal, export and deletion at any time.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -23,9 +23,9 @@ export default function PrivacyPage() {
                 goals and time blocks.
               </p>
               <p>
-                Journal entries are encrypted in your browser with a key derived from your passphrase before they are
-                saved. Dovie stores only the encrypted text and cannot read it. Mood, date and word count are stored
-                without encryption so the weekly review can count journal days.
+                Journal pages are saved as text on your account and can only be read while you are signed in. They
+                are not end-to-end encrypted, so the people who run Dovie&apos;s database could technically reach them;
+                Dovie does not read, sell or analyse them. The weekly review only counts the days you wrote.
               </p>
             </>
           ),

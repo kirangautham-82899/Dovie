@@ -30,7 +30,7 @@ export const SITE_NAME = "Dovie";
 export const SITE_TITLE = "Dovie: Daily Planner, Habit Tracker & Budget App";
 
 export const SITE_DESCRIPTION =
-  "Dovie is a free daily planner, to-do list and habit tracker with an expense tracker, budget planner, mood and sleep tracker, and a private encrypted journal. Plan your day, build habits, track spending in ₹ and reflect, all in one gentle app.";
+  "Dovie is a free daily planner, to-do list and habit tracker with an expense tracker, budget planner, mood and sleep tracker, and a private journal. Plan your day, build habits, track spending in ₹ and reflect, all in one gentle app.";
 
 export const SITE_KEYWORDS = [
   "daily planner app",
@@ -43,7 +43,7 @@ export const SITE_KEYWORDS = [
   "personal finance app",
   "money manager app",
   "private journal app",
-  "encrypted journal",
+  "gratitude journal",
   "digital diary",
   "mood tracker",
   "sleep tracker",

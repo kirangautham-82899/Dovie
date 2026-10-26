@@ -9,7 +9,7 @@ import { APP_CACHE_KEY } from "@/lib/app-cache";
 const DAY = 24 * 60 * 60 * 1000;
 
 // Never written to browser storage: key material and anything identity-only.
-const NOT_PERSISTED = new Set(["journal", "auth-user"]);
+const NOT_PERSISTED = new Set(["journal", "cycle", "mind", "auth-user"]);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(() => {

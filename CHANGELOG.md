@@ -1,5 +1,40 @@
 # Changelog
 
+## 2026-10-26
+
+### Wellness
+- **Mental health** is a fourth tab: a private daily check-in (feelings, stress from 1 to 5 and an optional short
+  note) with a seven-day stress strip, a box-breathing circle, a folded 5-4-3-2-1 grounding exercise and a note on
+  where to turn for support (Tele-MANAS 14416 in India). Migration `20261026200000_mind.sql` adds `mind_logs` (row-level
+  security, cleared by "clear my data", included in the export, never kept in the device cache or used for insights);
+  apply it before using the tab.
+- Wellness uses the Today look: a dot-grid notebook page with four sticky notes (sleep, water, energy, movement) and
+  three tabs so nothing crowds the page. **Today** holds the check-in and focus timer, with the starter templates
+  folded away. **Diet** is a new diet diary: breakfast, lunch, dinner and snacks, with optional calories and a day
+  switcher. **Period tracker** is new: tap a day to log flow and symptoms, see the day of your cycle, a
+  six-week strip with the next period marked, and an estimate from your last few cycles. Migration
+  `20261026100000_cycle_diet.sql` adds `period_logs` and `meals` (row-level security, cleared by "clear my data",
+  included in the export); apply it before using Diet and Period tracker. Period data is never kept in the device cache.
+
+### Journal
+- **The Journal is an open book, with no passphrase.** Contents and search sit on the left page; the right page is
+  a dot-grid notebook page for the day: a highlighted date, the day's prompt, a "how are you feeling?" mood row, a
+  borderless writing area and a "grateful for" line. Turn to any earlier day with the arrows, or pick it from the
+  contents. The page heading is smaller.
+- **Plain, not end-to-end encrypted.** Pages are saved as text on the account (migration
+  `20261026000000_journal_plain.sql` adds `body` and `gratitude` and makes `ciphertext` optional; apply it before
+  using the new Journal). Pages from the old encrypted journal stay in place as "older private pages" that can be
+  deleted or written over. The passphrase, recovery key and crypto code (`crypto.ts`, `session.ts`, `test:crypto`) are
+  gone, and the landing, privacy, terms, settings and SEO copy no longer claims encryption.
+
+### Planner
+- The Planner heading is smaller and sits on one line with its tagline.
+- The month calendar is gone. The Planner is a dot-grid notebook spread, one day at a time (previous/next day and
+  Today in the header). The left page is **Plan your day**: a **Top 3** of three numbered lines you write straight
+  onto (they are the day's starred priorities, so the three-a-day limit still holds), then the rest of the to-do
+  list on ruled lines. The right page is a new **Timetable**, one ruled row per hour from 6 am to 11 pm; write on a
+  line to add an entry. Entries use the existing `time_blocks` table, so they also appear on the Calendar page.
+
 ## 2026-10-19
 
 ### Today

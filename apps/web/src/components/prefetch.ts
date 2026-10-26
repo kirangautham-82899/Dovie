@@ -12,7 +12,7 @@ import { fetchJournal } from "@/features/journal/api";
 import { fetchWeekPlan } from "@/features/calendar/api";
 import { fetchWeek } from "@/features/weekly/api";
 import { fetchFitnessOverview } from "@/features/fitness/tracker/api";
-import { fetchPlannerMonth } from "@/features/planner/api";
+import { fetchPlannerBlocks, fetchPlannerDay, plannerBlocksKey, plannerDayKey } from "@/features/planner/api";
 
 // Warms a screen's data when its nav link is hovered, focused or touched, so
 // it is usually ready by the time the click lands. Keys must match the hooks
@@ -31,7 +31,8 @@ const SCREENS: Record<string, (qc: QueryClient, today: string) => Promise<unknow
     qc.prefetchQuery({ queryKey: ["movement", today], queryFn: () => fetchMovement(today) }),
   ],
   "/planner": (qc, today) => [
-    qc.prefetchQuery({ queryKey: ["planner", today.slice(0, 7)], queryFn: () => fetchPlannerMonth(today.slice(0, 7), today) }),
+    qc.prefetchQuery({ queryKey: plannerDayKey(today), queryFn: () => fetchPlannerDay(today, today) }),
+    qc.prefetchQuery({ queryKey: plannerBlocksKey(today), queryFn: () => fetchPlannerBlocks(today) }),
   ],
   "/fitness": (qc, today) => [
     qc.prefetchQuery({ queryKey: ["fitness-tracker", today], queryFn: () => fetchFitnessOverview(today) }),

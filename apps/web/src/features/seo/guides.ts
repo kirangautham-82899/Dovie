@@ -349,12 +349,12 @@ export const GUIDES: Record<GuideSlug, Guide> = {
   "private-journal": {
     slug: "private-journal",
     name: "Private journal",
-    title: "Private Encrypted Journal App (AES-256) | Dovie",
+    title: "Private Journal App with Daily Prompts | Dovie",
     description:
-      "Write in a private journal encrypted in your browser with AES-256 before it's saved. Daily prompts, gratitude and a key only you hold. Free on any device.",
+      "Write in a private dot-grid journal with daily prompts and a gratitude line. Only you can read it when signed in, and it is never used for ads or insights. Free on any device.",
     keywords: [
       "private journal app",
-      "encrypted journal",
+      "dot grid journal",
       "digital diary",
       "online diary",
       "journal app",
@@ -362,19 +362,19 @@ export const GUIDES: Record<GuideSlug, Guide> = {
       "secure diary app",
       "journaling app",
     ],
-    eyebrow: "Private encrypted journal",
-    h1: "A journal only",
-    accent: "you can read.",
+    eyebrow: "Private journal",
+    h1: "A journal just",
+    accent: "for you.",
     intro:
-      "Write freely in a journal that's encrypted on your device with AES-256 before it's ever saved. Gentle prompts and a gratitude line help on the days you don't know where to start.",
+      "Write freely on a dot-grid page that is yours alone. Gentle prompts and a gratitude line help on the days you don't know where to start.",
     tint: "bg-sky",
-    highlights: ["AES-256, encrypted in your browser", "Only your passphrase unlocks it", "Daily prompts and gratitude", "Never used for ads or insights"],
+    highlights: ["A dot-grid notebook page", "Only you can read it when signed in", "Daily prompts and gratitude", "Never used for ads or insights"],
     sections: [
       {
-        heading: "Encrypted before it leaves your device",
+        heading: "A page for every day",
         body: [
-          "Most journal apps store your words in a form their servers can read. Dovie encrypts every entry in your browser with AES-256 using a key protected by your passphrase. The server only ever stores ciphertext, so not even Dovie can read your journal.",
-          "When you set up the journal you get a recovery key. Keep it somewhere safe: without your passphrase or recovery key, entries can't be recovered by anyone.",
+          "Your journal is an open book: contents on the left, today's dot-grid page on the right. Write anything, note how you feel, and turn back to any earlier page whenever you like.",
+          "Pages are saved to your account and can only be read while you are signed in. There is no passphrase to remember. They are not end-to-end encrypted, so treat the journal like the rest of your account and keep your sign-in safe.",
         ],
       },
       {
@@ -391,18 +391,18 @@ export const GUIDES: Record<GuideSlug, Guide> = {
       },
     ],
     steps: [
-      { title: "Set a passphrase", body: "It protects the key that encrypts your entries. Save the recovery key." },
+      { title: "Open today's page", body: "There is nothing to set up. Sign in and the page is waiting." },
       { title: "Write a line", body: "Use the daily prompt or just say how today went." },
-      { title: "Come back anytime", body: "Unlock with your passphrase on any device to read past entries." },
+      { title: "Come back anytime", body: "Search or turn back to any earlier page, on any device." },
     ],
     faq: [
       {
         q: "Is Dovie's journal really private?",
-        a: "Yes. Entries are encrypted in your browser with AES-256 before they are saved, using a key only your passphrase or recovery key can unlock. Dovie stores only the encrypted text.",
+        a: "It is private to your account: pages can only be read while you are signed in, and are never used for insights, AI or ads. They are not end-to-end encrypted.",
       },
       {
-        q: "What if I forget my passphrase?",
-        a: "Use the recovery key you saved during setup. Without the passphrase or the recovery key, entries can't be decrypted by anyone, including Dovie.",
+        q: "Do I need a passphrase?",
+        a: "No. Sign in to Dovie and your journal opens straight away.",
       },
       {
         q: "Does Dovie use my journal for AI or ads?",
@@ -417,6 +417,6 @@ export const GUIDES: Record<GuideSlug, Guide> = {
         a: "Yes. The private journal is free while Dovie is in beta and works on Android, iPhone and desktop browsers.",
       },
     ],
-    featureList: ["AES-256 client-side encryption", "Passphrase and recovery key", "Daily writing prompts", "Gratitude line", "Export and delete"],
+    featureList: ["Dot-grid notebook pages", "Daily writing prompts", "Gratitude line", "Mood for each page", "Search past pages", "Export and delete"],
   },
 };

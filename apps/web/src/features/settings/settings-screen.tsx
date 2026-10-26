@@ -221,8 +221,8 @@ function PrivacyCard() {
     <Card>
       <SectionTitle icon={ShieldCheck} title="Privacy & your data" />
       <p className="text-sm text-muted-foreground">
-        Dovie never connects to your bank, cards, texts or messages. Journal text is encrypted in your browser before it
-        is saved. Insights use numbers and completion patterns, never journal words.
+        Dovie never connects to your bank, cards, texts or messages. Your journal is only readable when you are signed in.
+        Insights use numbers and completion patterns, never journal words.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Button variant="outline" onClick={() => exporter.mutate()} disabled={exporter.isPending}>

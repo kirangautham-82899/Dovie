@@ -295,6 +295,51 @@
   .dark .highlighter {
     background-image: linear-gradient(transparent 58%, hsl(44 60% 40% / 0.5) 58%, hsl(44 60% 40% / 0.5) 92%, transparent 92%);
   }
+  /* Planner: dot-grid paper, a dot every --cell (1.5rem). The dots sit on the
+     cell corners and rows are multiples of --cell tall, so their rules run
+     through the dots. */
+  .grid-paper {
+    --cell: 1.5rem;
+    background-color: var(--card);
+    background-image: radial-gradient(circle, color-mix(in oklab, var(--foreground) 24%, transparent) 1px, transparent 1.4px);
+    background-size: var(--cell) var(--cell);
+    background-position: calc(var(--cell) / -2) calc(var(--cell) / -2);
+  }
+  /* Journal: an open book. Page edges stack under it; on wide screens the two
+     pages are shaded toward the spine between them. */
+  .book {
+    border: 1px solid var(--border);
+    box-shadow:
+      0 1px 0 var(--border),
+      0 3px 0 -1px var(--card),
+      0 4px 0 -1px var(--border),
+      0 6px 0 -2px var(--card),
+      0 7px 0 -2px var(--border),
+      var(--soft-shadow);
+  }
+  @media (min-width: 64rem) {
+    .book-left,
+    .book-right {
+      position: relative;
+    }
+    .book-left::after,
+    .book-right::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2.5rem;
+      pointer-events: none;
+    }
+    .book-left::after {
+      right: 0;
+      background: linear-gradient(270deg, color-mix(in oklab, var(--foreground) 9%, transparent), transparent);
+    }
+    .book-right::before {
+      left: 0;
+      background: linear-gradient(90deg, color-mix(in oklab, var(--foreground) 9%, transparent), transparent);
+    }
+  }
   /* Ruled lines for a notepad textarea (line-height must match the 1.75rem step). */
   .pad-lines {
     background-image: linear-gradient(transparent calc(1.75rem - 1px), color-mix(in oklab, var(--foreground) 14%, transparent) calc(1.75rem - 1px));
