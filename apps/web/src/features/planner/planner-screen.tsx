@@ -1,195 +1,51 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Eye, EyeOff, ListChecks, Pencil, Plus, Sparkles, Star, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Pencil, Plus, Star, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ErrorNote } from "@/components/page-header";
 import { addDays, formatDate, relativeDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { MAX_PRIORITIES, MAX_TITLE_LENGTH, type Task } from "@/features/tasks/types";
-import { monthGrid } from "./api";
+import type { TimeBlock } from "@/features/calendar/api";
+import { clock, fillsRow, HOURS, hourLabel, rowOf, slotTimes } from "./time";
 import { usePlanner } from "./use-planner";
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+type Actions = ReturnType<typeof usePlanner>;
 
-function shiftMonth(month: string, by: number) {
-  const [y, m] = month.split("-").map(Number);
-  const d = new Date(Date.UTC(y, m - 1 + by, 1));
-  return d.toISOString().slice(0, 7);
-}
-
-/** A small donut showing how much of a day is checked off. */
-function DayRing({ done, total, size = 96 }: { done: number; total: number; size?: number }) {
-  const stroke = size / 9;
-  const r = (size - stroke) / 2;
-  const len = 2 * Math.PI * r;
-  const pct = total ? done / total : 0;
-  return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg viewBox={`0 0 ${size} ${size}`} className="size-full -rotate-90" aria-hidden>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--muted)" strokeWidth={stroke} />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke={pct === 1 ? "var(--chart-5)" : "var(--primary)"}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={len}
-          strokeDashoffset={len * (1 - pct)}
-          className="transition-[stroke-dashoffset] duration-700 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-serif text-2xl leading-none tabular-nums">{total ? Math.round(pct * 100) : 0}%</span>
-        <span className="text-[0.6rem] text-muted-foreground">
-          {done}/{total}
-        </span>
-      </div>
-    </div>
-  );
-}
+/** Every row on the page is two grid squares tall and ruled along its top edge. */
+const ROW = "flex h-12 items-center gap-3 border-t border-foreground/10";
 
 export function PlannerScreen({ today }: { today: string }) {
-  const [month, setMonth] = useState(today.slice(0, 7));
-  const [selected, setSelected] = useState(today);
+  const [day, setDay] = useState(today);
   const [error, setError] = useState<string | null>(null);
-  const p = usePlanner(month, today, setError);
-  const tasks = p.query.data ?? [];
-  const grid = monthGrid(month);
-
-  const byDay = new Map<string, Task[]>();
-  for (const t of tasks) byDay.set(t.due_date, [...(byDay.get(t.due_date) ?? []), t]);
-
-  const inMonth = tasks.filter((t) => t.due_date.startsWith(month));
-  const doneInMonth = inMonth.filter((t) => t.completed_at).length;
-  const perfectDays = [...byDay.entries()].filter(
-    ([d, list]) => d.startsWith(month) && list.length > 0 && list.every((t) => t.completed_at),
-  ).length;
-
-  function pick(day: string) {
-    setSelected(day);
-    if (!day.startsWith(month)) setMonth(day.slice(0, 7));
-  }
+  const p = usePlanner(day, today, setError);
 
   return (
     <div className="space-y-4">
       {error && <ErrorNote message={error} />}
       {p.query.isError && <ErrorNote message={`Could not load your plans: ${p.query.error.message}`} onRetry={() => p.query.refetch()} />}
+      {p.blocks.isError && <ErrorNote message={`Could not load your timetable: ${p.blocks.error.message}`} onRetry={() => p.blocks.refetch()} />}
 
-      <div className="ruled lg:grid-cols-[1fr_1.1fr]">
-        <Card>
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="font-serif text-2xl tracking-tight">{formatDate(`${month}-01`, { month: "long", year: "numeric" })}</h2>
-            <div className="flex items-center gap-1">
-              <Button size="icon-sm" variant="ghost" aria-label="Previous month" onClick={() => setMonth(shiftMonth(month, -1))}>
-                <ChevronLeft />
-              </Button>
-              <Button
-                size="xs"
-                variant="secondary"
-                onClick={() => {
-                  setMonth(today.slice(0, 7));
-                  setSelected(today);
-                }}
-              >
-                Today
-              </Button>
-              <Button size="icon-sm" variant="ghost" aria-label="Next month" onClick={() => setMonth(shiftMonth(month, 1))}>
-                <ChevronRight />
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center" role="grid" aria-label="Month">
-            {WEEKDAYS.map((d) => (
-              <span key={d} className="pb-1 text-[0.62rem] font-bold tracking-wider text-muted-foreground uppercase">
-                {d}
-              </span>
-            ))}
-            {grid.days.map((d) => {
-              const list = byDay.get(d) ?? [];
-              const done = list.filter((t) => t.completed_at).length;
-              const all = list.length > 0 && done === list.length;
-              const isSel = d === selected;
-              const isToday = d === today;
-              const outside = !d.startsWith(month);
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  role="gridcell"
-                  aria-selected={isSel}
-                  aria-label={`${formatDate(d, { weekday: "long", day: "numeric", month: "long" })}, ${list.length} plans, ${done} done`}
-                  onClick={() => pick(d)}
-                  className={cn(
-                    "relative flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl text-sm transition-all sm:aspect-[1/0.9]",
-                    isSel ? "bg-primary font-semibold text-primary-foreground shadow-soft" : "hover:bg-secondary",
-                    outside && !isSel && "text-muted-foreground/45",
-                    isToday && !isSel && "ring-2 ring-primary/60 ring-inset",
-                  )}
-                >
-                  <span className="tabular-nums">{Number(d.slice(8))}</span>
-                  {list.length > 0 &&
-                    (all ? (
-                      <span className={cn("flex size-4 items-center justify-center rounded-full", isSel ? "bg-primary-foreground/20" : "bg-chart-5 text-white")}>
-                        <Check className="size-2.5" strokeWidth={3} />
-                      </span>
-                    ) : (
-                      <span className="flex gap-0.5">
-                        {list.slice(0, 4).map((t) => (
-                          <span
-                            key={t.id}
-                            className={cn(
-                              "size-1.5 rounded-full",
-                              t.completed_at ? (isSel ? "bg-primary-foreground" : "bg-chart-5") : isSel ? "bg-primary-foreground/40" : "bg-primary/45",
-                            )}
-                          />
-                        ))}
-                      </span>
-                    ))}
-                </button>
-              );
-            })}
-          </div>
-
-          <dl className="grid grid-cols-3 divide-x border-t pt-3 text-center">
-            <div>
-              <dt className="text-[0.6rem] font-bold tracking-wider text-muted-foreground uppercase">Planned</dt>
-              <dd className="font-serif text-2xl tabular-nums">{inMonth.length}</dd>
-            </div>
-            <div>
-              <dt className="text-[0.6rem] font-bold tracking-wider text-muted-foreground uppercase">Done</dt>
-              <dd className="font-serif text-2xl tabular-nums">{doneInMonth}</dd>
-            </div>
-            <div>
-              <dt className="text-[0.6rem] font-bold tracking-wider text-muted-foreground uppercase">Clear days</dt>
-              <dd className="font-serif text-2xl tabular-nums">{perfectDays}</dd>
-            </div>
-          </dl>
-        </Card>
-
-        <DayPanel
-          key={selected}
-          day={selected}
+      <div className="overflow-hidden border bg-card shadow-sm lg:grid lg:grid-cols-[1.1fr_1fr]">
+        <PlanPage
+          key={day}
+          day={day}
           today={today}
-          tasks={byDay.get(selected) ?? []}
+          tasks={p.query.data ?? []}
           loading={p.query.isPending}
           actions={p}
           onClearError={() => setError(null)}
-          onGoTo={pick}
+          onGoTo={setDay}
         />
+        <Timetable day={day} today={today} entries={p.blocks.data ?? []} loading={p.blocks.isPending} actions={p} onClearError={() => setError(null)} />
       </div>
     </div>
   );
 }
 
-type Actions = ReturnType<typeof usePlanner>;
-
-function DayPanel({
+/** The left page: the date, the top three and everything else planned for the day. */
+function PlanPage({
   day,
   today,
   tasks,
@@ -206,173 +62,205 @@ function DayPanel({
   onClearError: () => void;
   onGoTo: (day: string) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [priority, setPriority] = useState(false);
   const [hideDone, setHideDone] = useState(false);
   const done = tasks.filter((t) => t.completed_at).length;
   const open = tasks.filter((t) => !t.completed_at);
-  const priorities = tasks.filter((t) => t.is_priority).length;
-  const sorted = [...tasks].sort(
-    (a, b) => Number(!!a.completed_at) - Number(!!b.completed_at) || Number(b.is_priority) - Number(a.is_priority),
-  );
-  const shown = hideDone ? sorted.filter((t) => !t.completed_at) : sorted;
-  const shownTop = shown.filter((t) => t.is_priority);
-  const shownRest = shown.filter((t) => !t.is_priority);
-  const emptySlots = Math.max(0, MAX_PRIORITIES - priorities);
+  const top = tasks.filter((t) => t.is_priority).slice(0, MAX_PRIORITIES);
+  const rest = tasks
+    .filter((t) => !t.is_priority)
+    .sort((a, b) => Number(!!a.completed_at) - Number(!!b.completed_at))
+    .filter((t) => !hideDone || !t.completed_at);
   const rel = relativeDay(day, today);
   const isPast = day < today;
   const tomorrow = addDays(day, 1);
 
   return (
-    <Card className="min-h-[28rem]">
-      <div className="flex items-start gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="eyebrow">{rel === "today" || rel === "tomorrow" || rel === "yesterday" ? rel : formatDate(day, { weekday: "long" })}</p>
-          <h2 className="font-serif text-3xl leading-tight tracking-tight">{formatDate(day, { weekday: "short", day: "numeric", month: "long" })}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {tasks.length === 0
-              ? isPast
-                ? "Nothing was planned here."
-                : "A clear page. Add what matters."
-              : done === tasks.length
-                ? "Everything checked off. Well done."
-                : `${open.length} to go${priorities ? ` · ${priorities} priorit${priorities > 1 ? "ies" : "y"}` : ""}`}
+    <section aria-label="Plan your day" className="grid-paper p-6">
+      <header className="flex min-h-24 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="eyebrow">Plan your day</p>
+          <h2 className="font-serif text-2xl leading-tight tracking-tight"><span className="highlighter px-1 -mx-1">{formatDate(day, { weekday: "short", day: "numeric", month: "long" })}</span></h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {rel === "today" || rel === "tomorrow" || rel === "yesterday" ? `${rel[0].toUpperCase()}${rel.slice(1)}` : rel}
+            {tasks.length > 0 && ` · ${done} of ${tasks.length} done`}
           </p>
         </div>
-        <DayRing done={done} total={tasks.length} />
+        <nav aria-label="Choose a day" className="flex shrink-0 items-center gap-0.5">
+          <Button size="icon-sm" variant="ghost" aria-label="Previous day" onClick={() => onGoTo(addDays(day, -1))}>
+            <ChevronLeft />
+          </Button>
+          <Button size="xs" variant="secondary" disabled={day === today} onClick={() => onGoTo(today)}>
+            Today
+          </Button>
+          <Button size="icon-sm" variant="ghost" aria-label="Next day" onClick={() => onGoTo(addDays(day, 1))}>
+            <ChevronRight />
+          </Button>
+        </nav>
+      </header>
+
+      <div className="flex h-12 items-end justify-between gap-3 pb-2.5">
+        <h3 className="font-serif text-lg leading-none tracking-tight"><span className="highlighter -mx-1 px-1">Top 3</span></h3>
+        <span className="text-xs leading-none text-muted-foreground">what matters most today</span>
       </div>
+      <ul aria-label="Top three">
+        {loading
+          ? [0, 1, 2].map((i) => <SkeletonRow key={i} />)
+          : Array.from({ length: MAX_PRIORITIES }, (_, i) => {
+              const task = top[i];
+              return task ? (
+                <TaskLine key={task.id} task={task} slot={i + 1} tomorrow={tomorrow} priorityLocked={false} actions={actions} onClearError={onClearError} />
+              ) : (
+                <LineAdd
+                  key={`slot-${i}`}
+                  label={`Top priority ${i + 1}`}
+                  placeholder={i === top.length ? "Write one thing that matters…" : "…and another"}
+                  marker={
+                    <span className="flex size-6 shrink-0 items-center justify-center border border-dashed border-foreground/35 font-serif text-xs text-muted-foreground">
+                      {i + 1}
+                    </span>
+                  }
+                  onAdd={(title) => {
+                    onClearError();
+                    actions.add.mutate({ title, date: day, priority: true });
+                  }}
+                />
+              );
+            })}
+      </ul>
 
-      {tasks.length > 0 && done === tasks.length && (
-        <div className="animate-rise flex items-center gap-2 rounded-2xl bg-mint px-3.5 py-2.5 text-sm text-mint-foreground">
-          <Sparkles className="size-4" /> Day complete. Take a breath and enjoy it.
-        </div>
-      )}
-
-      {!loading && (
-        <section aria-label="Top three" className="space-y-1.5">
-          <div className="flex items-baseline justify-between">
-            <h3 className="font-serif text-lg tracking-tight">Top three</h3>
-            <span className="text-xs text-muted-foreground">
-              {priorities}/{MAX_PRIORITIES}
-            </span>
-          </div>
-          <ul className="space-y-1.5">
-            {shownTop.map((t) => (
-              <PlanRow
-                key={t.id}
-                task={t}
-                tomorrow={tomorrow}
-                priorityLocked={false}
-                actions={actions}
-                onClearError={onClearError}
-              />
-            ))}
-            {Array.from({ length: emptySlots }, (_, i) => (
-              <li
-                key={i}
-                className="flex items-center gap-3 rounded-2xl border border-dashed px-3 py-2.5 text-sm text-muted-foreground"
-              >
-                <span className="flex size-6 shrink-0 items-center justify-center font-serif text-base">{priorities + i + 1}</span>
-                {i === 0 ? "Star a plan to pin it here" : "Room for one more"}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <form
-        className="flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!title.trim()) return;
-          onClearError();
-          actions.add.mutate({ title, date: day, priority: priority && priorities < MAX_PRIORITIES });
-          setTitle("");
-          setPriority(false);
-        }}
-      >
-        <div className="relative flex-1">
-          <Input
-            aria-label={`Add a task for ${formatDate(day, { day: "numeric", month: "long" })}`}
-            placeholder={isPast ? "Add something you did…" : "Add a task…"}
-            maxLength={MAX_TITLE_LENGTH}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="h-11 pr-11"
-          />
+      <div className="flex h-12 items-end justify-between gap-3 pb-2.5">
+        <h3 className="font-serif text-lg leading-none tracking-tight"><span className="highlighter -mx-1 px-1">To do</span></h3>
+        {done > 0 && (
           <button
             type="button"
-            aria-pressed={priority}
-            aria-label="Make it a priority"
-            title={priorities >= MAX_PRIORITIES ? "This day already has 3 priorities" : "Priority"}
-            disabled={priorities >= MAX_PRIORITIES}
-            onClick={() => setPriority((v) => !v)}
-            className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1.5 text-muted-foreground hover:text-primary disabled:opacity-30"
+            onClick={() => setHideDone((v) => !v)}
+            className="flex items-center gap-1 text-xs leading-none text-muted-foreground hover:text-foreground"
           >
-            <Star className={cn("size-4", priority && "fill-primary text-primary")} />
+            {hideDone ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+            {hideDone ? `Show ${done} done` : "Hide done"}
           </button>
-        </div>
-        <Button type="submit" size="icon-lg" className="size-11" aria-label="Add task" disabled={!title.trim()}>
-          <Plus />
-        </Button>
-      </form>
-
-      {loading ? (
-        <div className="space-y-2">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-11 animate-pulse rounded-2xl bg-muted/60" />
-          ))}
-        </div>
-      ) : (
-        <ul className="space-y-1.5">
-          {shownRest.map((t) => (
-            <PlanRow
-              key={t.id}
-              task={t}
-              tomorrow={tomorrow}
-              priorityLocked={priorities >= MAX_PRIORITIES}
-              actions={actions}
-              onClearError={onClearError}
-            />
-          ))}
-        </ul>
-      )}
-
-      <div className="mt-auto flex flex-wrap items-center gap-2 border-t pt-3">
-        {done > 0 && (
-          <Button size="sm" variant="ghost" onClick={() => setHideDone((v) => !v)}>
-            {hideDone ? <Eye /> : <EyeOff />} {hideDone ? `Show ${done} done` : "Hide done"}
-          </Button>
         )}
+      </div>
+      <ul aria-label="To do">
+        {loading
+          ? [0, 1].map((i) => <SkeletonRow key={i} />)
+          : rest.map((t) => (
+              <TaskLine key={t.id} task={t} tomorrow={tomorrow} priorityLocked={top.length >= MAX_PRIORITIES} actions={actions} onClearError={onClearError} />
+            ))}
+        <LineAdd
+          label={`Add a task for ${formatDate(day, { day: "numeric", month: "long" })}`}
+          placeholder={isPast ? "Add something you did…" : "Add a task…"}
+          marker={
+            <span className="flex size-6 shrink-0 items-center justify-center text-muted-foreground">
+              <Plus className="size-4" />
+            </span>
+          }
+          onAdd={(title) => {
+            onClearError();
+            actions.add.mutate({ title, date: day, priority: false });
+          }}
+        />
+      </ul>
+
+      <footer className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-foreground/10 pt-3 text-xs text-muted-foreground">
         {open.length > 0 && !isPast && (
-          <Button
-            size="sm"
-            variant="ghost"
+          <button
+            type="button"
+            className="flex items-center gap-1 font-medium text-foreground hover:underline"
             onClick={() => {
               onClearError();
               actions.move.mutate({ ids: open.map((t) => t.id), date: tomorrow });
               onGoTo(tomorrow);
             }}
           >
-            <ArrowRight /> Move {open.length} unfinished to {formatDate(tomorrow, { weekday: "short" })}
-          </Button>
+            <ArrowRight className="size-3.5" /> Move {open.length} unfinished to {formatDate(tomorrow, { weekday: "short" })}
+          </button>
         )}
-        <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-          <ListChecks className="size-3.5" /> Unfinished past plans roll into today on their own.
-        </span>
-      </div>
-    </Card>
+        <span>Unfinished past plans roll into today on their own.</span>
+      </footer>
+    </section>
   );
 }
 
-function PlanRow({
+function SkeletonRow() {
+  return (
+    <li className={ROW}>
+      <span className="size-6 shrink-0 animate-pulse bg-muted" />
+      <span className="h-3 w-2/3 animate-pulse rounded-full bg-muted" />
+    </li>
+  );
+}
+
+/** A square tick box that is one grid square wide. A slot number sits inside until it is ticked. */
+function Box({ checked, slot, disabled, label, onToggle }: { checked: boolean; slot?: number; disabled?: boolean; label: string; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onToggle}
+      className={cn(
+        "flex size-6 shrink-0 items-center justify-center border font-serif text-xs leading-none transition-colors",
+        checked
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-foreground/45 text-muted-foreground hover:border-primary hover:bg-secondary",
+      )}
+    >
+      {checked ? <Check className="size-4 animate-[pop_0.35s_ease-out]" strokeWidth={3} /> : slot}
+    </button>
+  );
+}
+
+/**
+ * A bare writing line. Enter or leaving the line files whatever was typed;
+ * an empty line does nothing.
+ */
+function LineAdd({ label, placeholder, marker, onAdd }: { label: string; placeholder: string; marker: React.ReactNode; onAdd: (title: string) => void }) {
+  const [value, setValue] = useState("");
+
+  function commit() {
+    const title = value.trim();
+    if (!title) return;
+    onAdd(title);
+    setValue("");
+  }
+
+  return (
+    <li className={cn(ROW, "focus-within:bg-secondary/40")}>
+      {marker}
+      <input
+        aria-label={label}
+        placeholder={placeholder}
+        maxLength={MAX_TITLE_LENGTH}
+        enterKeyHint="done"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
+        }}
+        className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+      />
+    </li>
+  );
+}
+
+function TaskLine({
   task,
+  slot,
   tomorrow,
   priorityLocked,
   actions,
   onClearError,
 }: {
   task: Task;
+  /** 1-3 for a line in the top three. */
+  slot?: number;
   tomorrow: string;
   priorityLocked: boolean;
   actions: Actions;
@@ -384,34 +272,21 @@ function PlanRow({
   const temp = task.id.startsWith("temp-");
 
   return (
-    <li
-      className={cn(
-        "group flex items-center gap-3 rounded-2xl border px-3 py-2.5 transition-all",
-        done ? "border-transparent bg-muted/50" : "bg-background hover:border-primary/40 hover:shadow-soft",
-        task.is_priority && !done && "border-primary/40 bg-secondary/40",
-      )}
-    >
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={done}
-        aria-label={done ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
+    <li className={cn(ROW, "group")}>
+      <Box
+        checked={done}
+        slot={slot}
         disabled={temp}
-        onClick={() => {
+        label={done ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
+        onToggle={() => {
           onClearError();
           actions.toggle.mutate({ id: task.id, done: !done });
         }}
-        className={cn(
-          "flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-all",
-          done ? "scale-105 border-chart-5 bg-chart-5 text-white" : "border-border hover:border-primary hover:bg-secondary",
-        )}
-      >
-        {done && <Check className="size-3.5 animate-[pop_0.35s_ease-out]" strokeWidth={3} />}
-      </button>
+      />
 
       {editing ? (
         <form
-          className="flex flex-1 gap-1"
+          className="flex h-full min-w-0 flex-1 items-center"
           onSubmit={(e) => {
             e.preventDefault();
             const t = draft.trim();
@@ -419,29 +294,36 @@ function PlanRow({
             if (t && t !== task.title) actions.rename.mutate({ id: task.id, title: t });
           }}
         >
-          <Input autoFocus value={draft} maxLength={MAX_TITLE_LENGTH} onChange={(e) => setDraft(e.target.value)} onBlur={() => setEditing(false)} className="h-8" />
+          <input
+            autoFocus
+            aria-label="Rename"
+            value={draft}
+            maxLength={MAX_TITLE_LENGTH}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={() => setEditing(false)}
+            onKeyDown={(e) => e.key === "Escape" && setEditing(false)}
+            className="h-8 w-full border-b border-foreground/40 bg-transparent text-sm outline-none"
+          />
         </form>
       ) : (
-        <span className={cn("min-w-0 flex-1 text-sm break-words", done && "text-muted-foreground line-through decoration-chart-5/60")}>
+        <span className={cn("line-clamp-2 min-w-0 flex-1 text-sm leading-tight break-words", done && "text-muted-foreground line-through")} title={task.title}>
           {task.title}
-          {task.carry_count > 0 && !done && (
-            <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[0.6rem] text-muted-foreground">carried {task.carry_count}×</span>
-          )}
+          {task.carry_count > 0 && !done && <span className="ml-2 text-[0.65rem] text-muted-foreground">carried {task.carry_count}×</span>}
         </span>
       )}
 
       {!editing && !temp && (
-        <span className="flex shrink-0 items-center opacity-70 transition-opacity group-hover:opacity-100">
+        <span className="flex shrink-0 items-center opacity-60 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
           <button
             type="button"
-            aria-label={task.is_priority ? "Remove priority" : "Make it a priority"}
+            aria-label={task.is_priority ? "Take out of the top three" : "Add to the top three"}
             aria-pressed={task.is_priority}
             disabled={priorityLocked || done}
             onClick={() => {
               onClearError();
               actions.star.mutate({ id: task.id, value: !task.is_priority });
             }}
-            className="rounded-full p-1.5 hover:bg-muted disabled:opacity-30"
+            className="p-1.5 hover:bg-muted disabled:opacity-30"
           >
             <Star className={cn("size-3.5", task.is_priority && "fill-primary text-primary")} />
           </button>
@@ -454,7 +336,7 @@ function PlanRow({
                   setDraft(task.title);
                   setEditing(true);
                 }}
-                className="rounded-full p-1.5 hover:bg-muted"
+                className="p-1.5 hover:bg-muted"
               >
                 <Pencil className="size-3.5" />
               </button>
@@ -462,17 +344,138 @@ function PlanRow({
                 type="button"
                 aria-label="Move to the next day"
                 onClick={() => actions.move.mutate({ ids: [task.id], date: tomorrow })}
-                className="rounded-full p-1.5 hover:bg-muted"
+                className="p-1.5 hover:bg-muted"
               >
                 <ArrowRight className="size-3.5" />
               </button>
             </>
           )}
-          <button type="button" aria-label="Delete" onClick={() => actions.remove.mutate(task.id)} className="rounded-full p-1.5 hover:bg-destructive/10 hover:text-destructive">
+          <button type="button" aria-label="Delete" onClick={() => actions.remove.mutate(task.id)} className="p-1.5 hover:bg-destructive/10 hover:text-destructive">
             <Trash2 className="size-3.5" />
           </button>
         </span>
       )}
     </li>
+  );
+}
+
+/** The right page: one ruled row per hour to write the day into. */
+function Timetable({
+  day,
+  today,
+  entries,
+  loading,
+  actions,
+  onClearError,
+}: {
+  day: string;
+  today: string;
+  entries: TimeBlock[];
+  loading: boolean;
+  actions: Actions;
+  onClearError: () => void;
+}) {
+  const [nowHour, setNowHour] = useState(() => new Date().getHours());
+  useEffect(() => {
+    const id = setInterval(() => setNowHour(new Date().getHours()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <section aria-label="Timetable" className="grid-paper border-t p-6 lg:border-t-0 lg:border-l">
+      <header className="min-h-24">
+        <p className="eyebrow">Timetable</p>
+        <h2 className="font-serif text-2xl leading-tight tracking-tight"><span className="highlighter -mx-1 px-1">Hour by hour</span></h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">Write on the line next to a time to give it a job.</p>
+      </header>
+
+      <ol aria-busy={loading} className="mt-6 border-b border-foreground/10">
+        {HOURS.map((hour) => {
+          const rowEntries = entries.filter((b) => rowOf(b) === hour);
+          const isNow = day === today && hour === nowHour;
+          return (
+            <li key={hour} className={cn("flex border-t border-foreground/10 focus-within:bg-secondary/40", isNow && "bg-primary/10")}>
+              <span
+                className={cn(
+                  "flex h-[calc(3rem-1px)] w-16 shrink-0 items-center justify-end border-r border-foreground/10 pr-3 text-xs tabular-nums text-muted-foreground",
+                  isNow && "font-semibold text-foreground",
+                )}
+              >
+                {hourLabel(hour)}
+              </span>
+              <div className="flex min-h-[calc(3rem-1px)] min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5">
+                {rowEntries.map((b) => (
+                  <Entry key={b.id} block={b} onRemove={() => actions.removeEntry.mutate(b.id)} />
+                ))}
+                <HourInput
+                  label={`Plan for ${hourLabel(hour)}`}
+                  placeholder={`Add at ${hourLabel(hour)}`}
+                  onAdd={(title) => {
+                    onClearError();
+                    actions.addEntry.mutate({ title, ...slotTimes(hour) });
+                  }}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
+function Entry({ block, onRemove }: { block: TimeBlock; onRemove: () => void }) {
+  const temp = block.id.startsWith("temp-");
+  return (
+    <span className="group/entry inline-flex min-h-7 max-w-full items-center gap-1.5 border-l-2 border-primary bg-primary/15 pl-2 text-sm">
+      <span className="min-w-0 truncate" title={block.title}>
+        {block.title}
+      </span>
+      {!fillsRow(block) && (
+        <span className="shrink-0 text-[0.65rem] text-muted-foreground">
+          {clock(block.starts_at)}–{clock(block.ends_at)}
+        </span>
+      )}
+      <button
+        type="button"
+        aria-label={`Remove ${block.title}`}
+        disabled={temp}
+        onClick={onRemove}
+        className="p-1.5 text-muted-foreground opacity-60 hover:text-destructive group-hover/entry:opacity-100 focus-visible:opacity-100 disabled:opacity-30"
+      >
+        <X className="size-3" />
+      </button>
+    </span>
+  );
+}
+
+/** The writing space on an hour's line. The hint only shows once the line is hovered or focused. */
+function HourInput({ label, placeholder, onAdd }: { label: string; placeholder: string; onAdd: (title: string) => void }) {
+  const [value, setValue] = useState("");
+
+  function commit() {
+    const title = value.trim();
+    if (!title) return;
+    onAdd(title);
+    setValue("");
+  }
+
+  return (
+    <input
+      aria-label={label}
+      placeholder={placeholder}
+      maxLength={80}
+      enterKeyHint="done"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit();
+        }
+      }}
+      className="h-9 min-w-24 flex-1 bg-transparent text-sm outline-none placeholder:text-transparent hover:placeholder:text-muted-foreground/60 focus:placeholder:text-muted-foreground/60"
+    />
   );
 }

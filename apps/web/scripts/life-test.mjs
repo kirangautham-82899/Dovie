@@ -115,7 +115,7 @@ check(
 );
 
 // ---------- isolation ----------
-for (const table of ["expenses", "incomes", "bills", "budgets", "savings_goals", "journal_keys", "journal_entries", "time_blocks", "focus_sessions"]) {
+for (const table of ["expenses", "incomes", "bills", "budgets", "savings_goals", "journal_keys", "journal_entries", "time_blocks", "focus_sessions", "period_logs", "meals", "mind_logs"]) {
   const { data } = await b.client.from(table).select("*");
   check(`B cannot read A's ${table}`, data?.length === 0);
 }

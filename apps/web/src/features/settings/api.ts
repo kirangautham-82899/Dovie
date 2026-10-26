@@ -50,17 +50,20 @@ const EXPORT_TABLES = [
   "time_blocks",
   "journal_keys",
   "journal_entries",
+  "period_logs",
+  "meals",
+  "mind_logs",
 ] as const;
 
 /**
- * Everything Dovie stores for this account, as JSON. Journal entries stay
- * encrypted: the export is only as readable as the data on the server.
+ * Everything Dovie stores for this account, as JSON. Journal pages are
+ * included as written; pages from the older encrypted journal stay as ciphertext.
  */
 export async function exportMyData(): Promise<Blob> {
   const supabase = createClient();
   const out: Record<string, unknown> = {
     exported_at: new Date().toISOString(),
-    note: "Journal entries are encrypted. Keep your passphrase or recovery key to read them.",
+    note: "Journal pages written in the older encrypted journal are exported as ciphertext and cannot be read.",
   };
   for (const table of EXPORT_TABLES) {
     const { data, error } = await supabase.from(table).select("*");

@@ -6,7 +6,7 @@ import { clearAppCache } from "@/lib/app-cache";
 /**
  * Signs out this device and leaves with a full page load. The reload is the
  * point: it drops every cached query (so the old screen can't refetch without
- * a session and flash errors) and wipes the unlocked journal key from memory.
+ * a session and flash errors).
  * "local" scope clears the session here without waiting on the network, and
  * the saved data cache is wiped so the next person starts clean.
  */

@@ -196,7 +196,7 @@ export default function OnboardingPage() {
           </span>
         </div>
       }
-      footer="Your information is yours. Journal entries are encrypted in your browser before saving."
+      footer="Your information is yours. Your journal is only readable when you are signed in."
     >
       <h1 className="font-serif text-4xl tracking-tight sm:text-5xl">Welcome to Dovie</h1>
       <p className="mt-1.5 text-sm text-muted-foreground">A few choices to help it feel like home.</p>

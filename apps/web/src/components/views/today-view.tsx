@@ -83,7 +83,7 @@ export function TodayView() {
                   <Slip>
                     <Card>
                       <SectionTitle icon={BookHeart} title="A moment for you" />
-                      <p className="text-sm text-muted-foreground">A sentence is plenty. It stays private and encrypted.</p>
+                      <p className="text-sm text-muted-foreground">A sentence is plenty. It stays private to you.</p>
                       <Link
                         href="/journal"
                         className="inline-flex w-fit text-sm font-semibold text-primary underline-offset-4 hover:underline"

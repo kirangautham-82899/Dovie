@@ -1,5 +1,9 @@
 # Dovie Journal Encryption Spec (v1)
 
+> **Retired (2026-10-26).** The journal is now a plain notebook with no passphrase, and `crypto.ts` and its test
+> were removed. This spec is kept only as a record of the earlier design; older ciphertext rows still exist in the
+> database and are shown in the app as older private pages.
+
 Web (Web Crypto) and Flutter (`cryptography` package) must produce and read
 **byte-identical** formats. Any change to this document is a new version, never an edit.
 

@@ -32,11 +32,11 @@ export default function TermsPage() {
           ),
         },
         {
-          heading: "Your journal key",
+          heading: "Your journal",
           body: (
             <p>
-              Your journal is encrypted with your passphrase. If you lose both your passphrase and your recovery key, your
-              entries cannot be recovered by anyone, including Dovie.
+              Your journal pages belong to you. They are saved to your account and only you can read them while signed
+              in. They are not end-to-end encrypted. If you delete a page or your account, it is permanently removed.
             </p>
           ),
         },
