@@ -1,18 +1,27 @@
 -- Goals, grown up: a reason, a date, a step size, a pin, milestones and a
 -- dated log of every step so the app can show pace, streaks and history.
+-- Safe to run again: each step skips what already exists.
 
 -- ---------- goals: new columns ----------
 alter table public.goals
-  add column why text,
-  add column target_date date,
-  add column step numeric not null default 1,
-  add column pinned boolean not null default false,
-  add column completed_at timestamptz,
-  add constraint goals_why_len check (why is null or char_length(btrim(why)) between 1 and 200),
-  add constraint goals_step_range check (step > 0 and step <= 1000000000);
+  add column if not exists why text,
+  add column if not exists target_date date,
+  add column if not exists step numeric not null default 1,
+  add column if not exists pinned boolean not null default false,
+  add column if not exists completed_at timestamptz;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'goals_why_len') then
+    alter table public.goals add constraint goals_why_len check (why is null or char_length(btrim(why)) between 1 and 200);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'goals_step_range') then
+    alter table public.goals add constraint goals_step_range check (step > 0 and step <= 1000000000);
+  end if;
+end $$;
 
 -- ---------- goal_milestones ----------
-create table public.goal_milestones (
+create table if not exists public.goal_milestones (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   goal_id uuid not null references public.goals (id) on delete cascade,
@@ -21,21 +30,26 @@ create table public.goal_milestones (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index goal_milestones_goal_idx on public.goal_milestones (goal_id);
+create index if not exists goal_milestones_goal_idx on public.goal_milestones (goal_id);
 
 alter table public.goal_milestones enable row level security;
+drop trigger if exists set_updated_at on public.goal_milestones;
 create trigger set_updated_at before update on public.goal_milestones
   for each row execute function public.set_updated_at();
 
+drop policy if exists "goal_milestones_select_own" on public.goal_milestones;
 create policy "goal_milestones_select_own" on public.goal_milestones for select using (user_id = auth.uid());
+drop policy if exists "goal_milestones_insert_own" on public.goal_milestones;
 create policy "goal_milestones_insert_own" on public.goal_milestones for insert with check (
   user_id = auth.uid() and exists (select 1 from public.goals g where g.id = goal_id and g.user_id = auth.uid())
 );
+drop policy if exists "goal_milestones_update_own" on public.goal_milestones;
 create policy "goal_milestones_update_own" on public.goal_milestones for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "goal_milestones_delete_own" on public.goal_milestones;
 create policy "goal_milestones_delete_own" on public.goal_milestones for delete using (user_id = auth.uid());
 
 -- ---------- goal_logs: one row per step taken ----------
-create table public.goal_logs (
+create table if not exists public.goal_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   goal_id uuid not null references public.goals (id) on delete cascade,
@@ -44,15 +58,18 @@ create table public.goal_logs (
   log_date date not null default current_date,
   created_at timestamptz not null default now()
 );
-create index goal_logs_user_date_idx on public.goal_logs (user_id, log_date);
-create index goal_logs_goal_idx on public.goal_logs (goal_id);
+create index if not exists goal_logs_user_date_idx on public.goal_logs (user_id, log_date);
+create index if not exists goal_logs_goal_idx on public.goal_logs (goal_id);
 
 alter table public.goal_logs enable row level security;
 
+drop policy if exists "goal_logs_select_own" on public.goal_logs;
 create policy "goal_logs_select_own" on public.goal_logs for select using (user_id = auth.uid());
+drop policy if exists "goal_logs_insert_own" on public.goal_logs;
 create policy "goal_logs_insert_own" on public.goal_logs for insert with check (
   user_id = auth.uid() and exists (select 1 from public.goals g where g.id = goal_id and g.user_id = auth.uid())
 );
+drop policy if exists "goal_logs_delete_own" on public.goal_logs;
 create policy "goal_logs_delete_own" on public.goal_logs for delete using (user_id = auth.uid());
 -- The app writes logs through log_goal_progress so the running total and the log never disagree.
 

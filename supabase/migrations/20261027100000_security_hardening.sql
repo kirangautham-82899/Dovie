@@ -11,6 +11,8 @@
 --    owner's own goals and workout logs.
 -- 6. AI insight calls are rate-limited per user in the database, so the
 --    limit holds across every server instance.
+--
+-- Safe to run again: each step skips or replaces what already exists.
 
 -- ---------- 0. two-step check, kept out of the exposed API ----------
 create schema if not exists private;
@@ -32,16 +34,17 @@ revoke execute on function private.mfa_ok() from public, anon;
 grant execute on function private.mfa_ok() to authenticated;
 
 -- ---------- 0. a table for the per-user AI rate limit (see 6) ----------
-create table public.ai_requests (
+create table if not exists public.ai_requests (
   id bigint generated always as identity primary key,
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   created_at timestamptz not null default now()
 );
-create index ai_requests_user_time_idx on public.ai_requests (user_id, created_at);
+create index if not exists ai_requests_user_time_idx on public.ai_requests (user_id, created_at);
 
 alter table public.ai_requests enable row level security;
 -- Readable by the owner; written only through claim_ai_request, so nobody can
 -- delete their own rows to reset the limit.
+drop policy if exists "ai_requests_select_own" on public.ai_requests;
 create policy "ai_requests_select_own" on public.ai_requests for select to authenticated
   using (user_id = (select auth.uid()));
 revoke all on public.ai_requests from anon;
