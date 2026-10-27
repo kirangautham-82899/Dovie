@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { GUIDE_SLUGS } from "@/features/seo/guides";
 
 // Pages anyone can see. "/" (the landing page) is matched exactly below.
 const PUBLIC_PATHS = [
@@ -9,12 +10,8 @@ const PUBLIC_PATHS = [
   "/terms",
   "/auth",
   "/manifest.webmanifest",
-  // Public feature guides for search (see features/seo/guides.ts).
-  "/habit-tracker",
-  "/expense-tracker",
-  "/daily-planner",
-  "/mood-tracker",
-  "/private-journal",
+  // Public feature guides for search.
+  ...GUIDE_SLUGS.map((slug) => `/${slug}`),
 ];
 // Signed-in people skip these and go straight to their day.
 const SIGNED_OUT_ONLY = ["/", "/login", "/signup"];

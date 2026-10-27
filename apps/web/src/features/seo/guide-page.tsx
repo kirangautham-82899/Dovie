@@ -91,7 +91,7 @@ function GuideLinks({ current, className }: { current?: GuideSlug; className?: s
 /** A public page that explains one part of Dovie for people searching for it. */
 export function GuidePage({ slug }: { slug: GuideSlug }) {
   const g = GUIDES[slug];
-  const related = GUIDE_SLUGS.filter((s) => s !== slug);
+  const related = g.related ?? GUIDE_SLUGS.filter((s) => s !== slug).slice(0, 4);
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-clip">
