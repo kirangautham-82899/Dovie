@@ -55,6 +55,21 @@ export async function proxy(request: NextRequest) {
     url.search = "";
     return NextResponse.redirect(url);
   }
+  // Two-step verification: a password-only session (aal1) for someone with a
+  // verified factor can reach nothing private until the code is entered. The
+  // database enforces the same rule, so this is about sending them somewhere useful.
+  if (user && user.aal !== "aal2" && !isPublic && pathname !== "/verify") {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Enter your verification code first." }, { status: 401 });
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/verify";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+  }
   if (user && SIGNED_OUT_ONLY.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/today";

@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/field";
 
+/** Messages for the `?error=` codes other pages send here. Anything else gets the generic one. */
+const URL_ERRORS: Record<string, string> = {
+  link: "That sign-in link didn't work or has expired. Please try again.",
+};
+const urlError = (code: string | null) => (code ? (URL_ERRORS[code] ?? URL_ERRORS.link) : null);
+
 export default function LoginPage() {
   return (
     <AuthShell
@@ -31,7 +37,7 @@ function LoginForm() {
   const params = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(params.get("error"));
+  const [error, setError] = useState<string | null>(urlError(params.get("error")));
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -40,10 +46,16 @@ function LoginForm() {
     setError(null);
     // A new sign-in starts with an empty cache, whoever used this browser before.
     clearAppCache();
-    const { error } = await createClient().auth.signInWithPassword({ email, password });
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoading(false);
+      return setError(error.message);
+    }
+    // People with two-step verification still need their code.
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     setLoading(false);
-    if (error) return setError(error.message);
-    router.replace("/today");
+    router.replace(aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2" ? "/verify" : "/today");
     router.refresh();
   }
 

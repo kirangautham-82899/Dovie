@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     if (!error) return NextResponse.redirect(`${origin}/today`);
   }
 
-  const description = searchParams.get("error_description") ?? "That sign-in link did not work. Please try again.";
-  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(description)}`);
+  // Only a short code travels in the URL; the login page owns the wording, so
+  // nobody can craft a link that shows their own text on Dovie's sign-in page.
+  return NextResponse.redirect(`${origin}/login?error=link`);
 }

@@ -119,7 +119,7 @@ export function AuthShell({
   title: string;
   subtitle: string;
   /** The other auth page, shown top-right: e.g. "New to Dovie?" + sign up. */
-  switchTo: { prompt: string; label: string; href: string };
+  switchTo?: { prompt: string; label: string; href: string };
   accent: Accent;
   signoff: string;
   children: React.ReactNode;
@@ -136,12 +136,14 @@ export function AuthShell({
         <Link href="/" aria-label="Dovie home">
           <Logo />
         </Link>
-        <p className="text-sm text-muted-foreground">
-          <span className="hidden sm:inline">{switchTo.prompt} </span>
-          <Link href={switchTo.href} className="font-semibold text-secondary-foreground underline-offset-4 hover:underline">
-            {switchTo.label}
-          </Link>
-        </p>
+        {switchTo && (
+          <p className="text-sm text-muted-foreground">
+            <span className="hidden sm:inline">{switchTo.prompt} </span>
+            <Link href={switchTo.href} className="font-semibold text-secondary-foreground underline-offset-4 hover:underline">
+              {switchTo.label}
+            </Link>
+          </p>
+        )}
       </header>
 
       <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-8 px-5 pb-2 grid-cols-[minmax(0,1fr)] lg:grid-cols-[1fr_24rem_1fr]">

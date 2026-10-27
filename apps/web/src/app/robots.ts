@@ -21,6 +21,7 @@ export default function robots(): MetadataRoute.Robots {
         "/calendar",
         "/weekly",
         "/settings",
+        "/verify",
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

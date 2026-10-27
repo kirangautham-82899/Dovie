@@ -19,19 +19,42 @@ export type Insight = z.infer<typeof Insight>;
 
 const SHARED_RULES = `Use only the numbers you are given; don't invent figures or reasons. When data is thin or confidence is low, say the picture is still forming. Keep the tone kind and free of judgment, and keep suggestions small and everyday. This is not medical or financial advice, so don't give any.`;
 
-// Best-effort guard against runaway cost: 10 requests per user per hour on
-// each server instance. Serverless instances don't share this map.
-const recent = new Map<string, number[]>();
+// Guard against runaway cost: 10 requests per user per hour, counted in the
+// database (claim_ai_request) so every server instance shares one limit. Until
+// that migration has run, a per-instance count stands in.
 const LIMIT = 10;
-const WINDOW_MS = 60 * 60 * 1000;
+const WINDOW_MINUTES = 60;
+const recent = new Map<string, number[]>();
 
-function allow(userId: string) {
+function allowLocally(userId: string) {
   const now = Date.now();
-  const hits = (recent.get(userId) ?? []).filter((t) => now - t < WINDOW_MS);
+  const hits = (recent.get(userId) ?? []).filter((t) => now - t < WINDOW_MINUTES * 60_000);
   if (hits.length >= LIMIT) return false;
   hits.push(now);
   recent.set(userId, hits);
   return true;
+}
+
+async function allow(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { data, error } = await supabase.rpc("claim_ai_request", { p_limit: LIMIT, p_window_minutes: WINDOW_MINUTES });
+  if (!error) return data === true;
+  if (error.code === "PGRST202" || error.code === "42883") return allowLocally(userId);
+  throw new Error(error.message);
+}
+
+/** The summaries are a few hundred bytes; anything far bigger isn't from the app. */
+const MAX_BODY_BYTES = 16_000;
+
+async function readJson(request: Request): Promise<unknown> {
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY_BYTES) return null;
+  const text = await request.text().catch(() => "");
+  if (text.length > MAX_BODY_BYTES) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 const fail = (error: string, status: number) => Response.json({ error }, { status });
@@ -51,7 +74,7 @@ export async function insightResponse<T>(
   const userId = auth?.claims.sub;
   if (!userId) return fail("Please sign in again.", 401);
 
-  const parsed = input.safeParse(await request.json().catch(() => null));
+  const parsed = input.safeParse(await readJson(request));
   if (!parsed.success) return fail("That summary looks incomplete.", 400);
 
   // On Vercel the keys come from the project's environment variables.
@@ -60,7 +83,11 @@ export async function insightResponse<T>(
   if (!geminiKey && !process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
     return fail("AI insights aren't set up yet (add GEMINI_API_KEY or ANTHROPIC_API_KEY).", 503);
   }
-  if (!allow(userId)) return fail("That's a lot of questions for one hour. Try again a little later.", 429);
+  try {
+    if (!(await allow(supabase, userId))) return fail("That's a lot of questions for one hour. Try again a little later.", 429);
+  } catch {
+    return fail("Couldn't check your request just now. Please try again.", 503);
+  }
 
   const instructions = `${system}\n\n${SHARED_RULES}`;
   const payload = JSON.stringify(parsed.data);

@@ -37,6 +37,8 @@ const EXPORT_TABLES = [
   "habits",
   "habit_logs",
   "goals",
+  "goal_milestones",
+  "goal_logs",
   "workout_logs",
   "fitness_sessions",
   "daily_activity",
@@ -44,6 +46,7 @@ const EXPORT_TABLES = [
   "checkins",
   "focus_sessions",
   "expenses",
+  "incomes",
   "bills",
   "budgets",
   "savings_goals",
@@ -67,6 +70,8 @@ export async function exportMyData(): Promise<Blob> {
   };
   for (const table of EXPORT_TABLES) {
     const { data, error } = await supabase.from(table).select("*");
+    // A table whose migration hasn't run yet simply has nothing to export.
+    if (error && (error.code === "42P01" || error.code === "PGRST205")) continue;
     if (error) throw new Error(`${table}: ${error.message}`);
     out[table] = data;
   }
