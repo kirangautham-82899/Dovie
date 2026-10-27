@@ -27,6 +27,12 @@ export const SITE_URL =
 
 export const SITE_NAME = "Dovie";
 
+/**
+ * Where people reach a human: support, privacy requests and grievances.
+ * Set NEXT_PUBLIC_SUPPORT_EMAIL in Vercel; the legal pages show it when set.
+ */
+export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || null;
+
 export const SITE_TITLE = "Dovie: Daily Planner, Habit Tracker & Budget App";
 
 export const SITE_DESCRIPTION =

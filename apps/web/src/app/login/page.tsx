@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { clearAppCache } from "@/lib/app-cache";
@@ -73,6 +74,9 @@ function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
         />
       </Field>
+      <Link href="/forgot" className="-mt-1.5 self-end text-xs font-semibold text-secondary-foreground underline-offset-4 hover:underline">
+        Forgot password?
+      </Link>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" size="lg" loading={loading} className="mt-1">
         {loading ? "Signing in…" : "Continue"}

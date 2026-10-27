@@ -22,6 +22,7 @@ export default function robots(): MetadataRoute.Robots {
         "/weekly",
         "/settings",
         "/verify",
+        "/reset-password",
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

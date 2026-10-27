@@ -24,6 +24,9 @@ export default function SignupPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!isAdult) return setError("Dovie is currently for adults, 18 and over.");
+    if (!/[a-z]/i.test(password) || !/[0-9\W]/.test(password)) {
+      return setError("Add a number or symbol to your password.");
+    }
     setLoading(true);
     setError(null);
     clearAppCache();
@@ -63,11 +66,11 @@ export default function SignupPage() {
           <Field label="Email address">
             <Input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </Field>
-          <Field label="Password" hint="At least 8 characters.">
+          <Field label="Password" hint="At least 10 characters, with a number or symbol.">
             <Input
               type="password"
               autoComplete="new-password"
-              minLength={8}
+              minLength={10}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}

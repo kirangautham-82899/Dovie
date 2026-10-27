@@ -189,7 +189,7 @@ export function WeekPredictor({ history }: { history: ReviewDay[] }) {
             endpoint="/api/insights/weekly"
             payload={() => toAiSummary(p)}
             label="Ask Dovie about next week"
-            disclosure="Sends these weekly numbers and weekday names to Claude for a short look ahead. Task titles, notes and journal entries are never sent."
+            disclosure="Sends these weekly numbers and weekday names to an AI service (Google Gemini or Anthropic Claude) for a short look ahead. Task titles, notes and journal entries are never sent."
           />
           <p className="mt-3 text-[0.7rem] text-muted-foreground">Gentle estimates from your own logs, not promises.</p>
         </div>

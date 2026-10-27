@@ -143,7 +143,7 @@ export function MoneyForecastCard({
               endpoint="/api/insights/money"
               payload={() => toSummary(f, today, data)}
               label="Ask Dovie what this means"
-              disclosure="Sends these totals, category names and goal titles to Claude for a short read. Expense notes and journal entries are never sent."
+              disclosure="Sends these totals, category names and goal titles to an AI service (Google Gemini or Anthropic Claude) for a short read. Expense notes and journal entries are never sent."
             />
           </div>
         </>

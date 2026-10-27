@@ -20,6 +20,11 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
       - run: npm ci
       - run: npm run lint
+      # Offline checks for the pure logic (forecasts, predictions, tracker, mood × money).
+      - run: npm run test:forecast
+      - run: npm run test:predict
+      - run: npm run test:tracker
+      - run: npm run test:mood-money
       - run: npm run build
         env:
           # Placeholders: the build does not contact Supabase.

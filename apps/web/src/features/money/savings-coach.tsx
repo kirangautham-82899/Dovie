@@ -203,7 +203,7 @@ export function SavingsCoach({ today, data, incomePaise }: { today: string; data
                   {coach.isPending ? "Dovie is looking for savings…" : plan ? "Build a fresh plan" : "Build my savings plan"}
                 </Button>
                 <p className="text-[0.7rem] text-muted-foreground">
-                  Sends category totals, bill names and amounts, goal titles and your income figure to the AI. Expense notes and
+                  Sends category totals, bill names and amounts, goal titles and your income figure to an AI service (Google Gemini or Anthropic Claude). Expense notes and
                   journal entries are never sent.
                 </p>
                 {coach.isError && <ErrorNote message={coach.error.message} onRetry={() => coach.mutate(toSummary(data, f, a, incomePaise, prefs.focus, today))} />}

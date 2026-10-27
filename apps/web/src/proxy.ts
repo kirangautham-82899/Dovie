@@ -1,17 +1,24 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { GUIDE_SLUGS } from "@/features/seo/guides";
 
-// Pages anyone can see. "/" (the landing page) is matched exactly below.
-const PUBLIC_PATHS = [
-  "/login",
-  "/signup",
-  "/privacy",
-  "/terms",
-  "/auth",
-  "/manifest.webmanifest",
-  // Public feature guides for search.
-  ...GUIDE_SLUGS.map((slug) => `/${slug}`),
+// Signed-in screens and endpoints. Everything else (the landing page, guides,
+// legal pages, sign-in, and any unknown address, which should get a real 404)
+// is public.
+const PRIVATE_PATHS = [
+  "/today",
+  "/goals",
+  "/money",
+  "/fitness",
+  "/planner",
+  "/journal",
+  "/wellness",
+  "/calendar",
+  "/weekly",
+  "/settings",
+  "/onboarding",
+  "/verify",
+  "/reset-password",
+  "/api",
 ];
 // Signed-in people skip these and go straight to their day.
 const SIGNED_OUT_ONLY = ["/", "/login", "/signup"];
@@ -43,7 +50,7 @@ export async function proxy(request: NextRequest) {
   const user = data?.claims.sub ? data.claims : null;
 
   const { pathname } = request.nextUrl;
-  const isPublic = pathname === "/" || PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isPublic = !PRIVATE_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   if (!user && !isPublic) {
     // API callers get a status they can handle, not a redirect to an HTML page.
