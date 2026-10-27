@@ -9,7 +9,7 @@ import { fetchWellness } from "@/features/wellness/api";
 import { fetchMoney } from "@/features/money/api";
 import { fetchGoals, fetchMovement } from "@/features/goals/api";
 import { fetchJournal } from "@/features/journal/api";
-import { fetchWeekPlan } from "@/features/calendar/api";
+import { calendarKey, fetchMonth } from "@/features/calendar/api";
 import { fetchWeek } from "@/features/weekly/api";
 import { fetchFitnessOverview } from "@/features/fitness/tracker/api";
 import { fetchPlannerBlocks, fetchPlannerDay, plannerBlocksKey, plannerDayKey } from "@/features/planner/api";
@@ -40,7 +40,9 @@ const SCREENS: Record<string, (qc: QueryClient, today: string) => Promise<unknow
   "/money": (qc, today) => [qc.prefetchQuery({ queryKey: ["money", today], queryFn: () => fetchMoney(today) })],
   "/journal": (qc) => [qc.prefetchQuery({ queryKey: ["journal"], queryFn: fetchJournal })],
   "/wellness": (qc, today) => [qc.prefetchQuery({ queryKey: ["wellness", today], queryFn: () => fetchWellness(today) })],
-  "/calendar": (qc, today) => [qc.prefetchQuery({ queryKey: ["calendar", today], queryFn: () => fetchWeekPlan(today) })],
+  "/calendar": (qc, today) => [
+    qc.prefetchQuery({ queryKey: calendarKey(today.slice(0, 7)), queryFn: () => fetchMonth(today.slice(0, 7)) }),
+  ],
   "/weekly": (qc, today) => [qc.prefetchQuery({ queryKey: ["week", today], queryFn: () => fetchWeek(today) })],
 };
 
