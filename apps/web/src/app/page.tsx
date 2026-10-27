@@ -2,15 +2,20 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookHeart,
+  CalendarDays,
   BookLock,
   Check,
   Download,
   Droplets,
   EyeOff,
+  Flag,
+  Footprints,
   HandCoins,
   HeartPulse,
   LineChart,
   Lock,
+  ShieldCheck,
+  Smartphone,
   Sun,
   Target,
   Timer,
@@ -32,7 +37,7 @@ const STEPS = [
 const FAQ = [
   {
     q: "Is Dovie a free daily planner app?",
-    a: "Yes. Dovie is free while in beta. It brings a daily planner and to-do list, habit tracker, expense tracker, budget planner, private journal and wellness tracking together in one app, so you don't need five separate ones.",
+    a: "Yes. Dovie is free while in beta. It brings a daily planner and to-do list, month calendar, habit and goal tracker, expense tracker, budget planner, fitness tracker, private journal and wellness tracking together in one app, so you don't need five separate ones.",
   },
   {
     q: "Can I use Dovie as a habit tracker?",
@@ -51,6 +56,10 @@ const FAQ = [
     a: "Yes. Dovie forecasts your month-end spending, flags budgets that may run over and estimates when you'll reach savings goals. The weekly review predicts next week's plans, habits, sleep and focus from your last four weeks.",
   },
   {
+    q: "Is my Dovie account secure?",
+    a: "Every record is locked to your account in the database, so no one else can read it. You can turn on two-step verification in Settings, so signing in also needs a code from an authenticator app on your phone.",
+  },
+  {
     q: "Does Dovie work on my phone?",
     a: "Yes. Dovie works in any modern browser on Android, iPhone and desktop, and you can add it to your home screen to open it like an app.",
   },
@@ -61,6 +70,8 @@ const PRIVACY = [
   { icon: HandCoins, title: "No bank access", body: "Add money by hand. No cards, SMS or statements, ever." },
   { icon: EyeOff, title: "No selling, no ads", body: "Insights use numbers and completions, never your words." },
   { icon: Download, title: "Export or erase", body: "Download everything as JSON, or delete your account in one step." },
+  { icon: Smartphone, title: "Two-step sign-in", body: "Add a code from your phone, so a password alone can't open your account." },
+  { icon: ShieldCheck, title: "Locked to you", body: "Every record is sealed to your account in the database itself." },
 ];
 
 const NAV = [
@@ -228,24 +239,29 @@ export default function LandingPage() {
             <DoveLetter>
               <p className="font-serif text-base text-muted-foreground italic">Dear you,</p>
 
-              {/* The h1 leads with what Dovie is (for search), then the feeling (for people). */}
-              <h1 className="mt-1">
-                <span className="sr-only">Daily planner, habit tracker and budget app. </span>
-                <span className="block font-serif text-3xl leading-[1.08] tracking-tight text-balance sm:text-4xl">
-                  A softer place to <em className="text-rose pr-1">start again.</em>
-                </span>
+              {/* The h1 says plainly what Dovie is: people decide in seconds, and search reads it too. */}
+              <h1 className="mt-1 font-serif text-3xl leading-[1.08] tracking-tight text-balance sm:text-4xl">
+                Your day, habits and money, <em className="text-rose pr-1">in one gentle place.</em>
               </h1>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Plan your day, tick off a habit, jot down a thought. One quiet place for all of it.
+                A daily planner, habit tracker, budget app and private journal in one. Plan today, keep small habits,
+                track spending in rupees and look back kindly.
               </p>
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                 <Link href="/signup" className={CTA_PRIMARY}>
-                  Make a little space
+                  Start free
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <p className="font-serif text-base text-muted-foreground italic">with care, Dovie</p>
               </div>
+              <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                {["Free", "No ads", "No bank login"].map((t) => (
+                  <span key={t} className="flex items-center gap-1">
+                    <Check className="size-3 text-primary" /> {t}
+                  </span>
+                ))}
+              </p>
             </DoveLetter>
           </div>
         </section>
@@ -284,7 +300,7 @@ export default function LandingPage() {
               className="md:col-span-2"
               title="Small habits"
               guide="habit-tracker"
-              body="Streaks that bend around real life, plus a goal tracker for the bigger things."
+              body="One-tap check-offs and streaks that bend around real life. A missed day is a pause, not a reset."
             >
               <div className={PANEL}>
                 <div className="flex justify-between">
@@ -363,13 +379,81 @@ export default function LandingPage() {
             </Feature>
 
             <Feature
+              icon={CalendarDays}
+              tint="bg-sky"
+              className="md:col-span-3"
+              title="Your month, at a glance"
+              body="A month calendar with your plans, time blocks, bills, moods and workouts on every day. Drag a plan to another day to move it."
+            >
+              <div className={`${PANEL} grid grid-cols-7 gap-1 text-center text-[0.65rem]`}>
+                {Array.from({ length: 14 }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`flex aspect-square flex-col items-center justify-start gap-0.5 rounded-md pt-1 ${i === 9 ? "bg-primary text-primary-foreground" : "bg-muted/60"}`}
+                  >
+                    {i + 12}
+                    {[1, 4, 9, 11].includes(i) && <i className={`size-1.5 rounded-full ${i === 9 ? "bg-card" : "bg-primary/70"}`} />}
+                    {[4, 13].includes(i) && <i className="size-1.5 rounded-full bg-butter-foreground/70" />}
+                  </span>
+                ))}
+              </div>
+            </Feature>
+
+            <Feature
+              icon={Flag}
+              tint="bg-blush"
+              className="md:col-span-3"
+              title="Goals that grow"
+              guide="goal-tracker"
+              body="Give a goal a target, a date and a reason, add milestones, and log progress in a tap. Dovie tells you if you're on track."
+            >
+              <div className={`${PANEL} flex items-center gap-4`}>
+                <span
+                  className="flex size-14 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                  style={{
+                    background: "conic-gradient(var(--primary) 0 58%, var(--muted) 58% 100%)",
+                    WebkitMask: "radial-gradient(circle, transparent 55%, black 56%)",
+                    mask: "radial-gradient(circle, transparent 55%, black 56%)",
+                  }}
+                />
+                <p className="min-w-0 text-xs">
+                  <span className="block font-semibold">Read 12 books this year</span>
+                  <span className="text-muted-foreground">7 of 12 · about 1 a month</span>
+                  <span className="mt-1 inline-block rounded-full bg-secondary px-2 py-0.5 text-[0.65rem] font-semibold text-secondary-foreground">
+                    On track
+                  </span>
+                </p>
+              </div>
+            </Feature>
+
+            <Feature
+              icon={Footprints}
+              tint="bg-mint"
+              className="md:col-span-2"
+              title="Move your way"
+              guide="fitness-tracker"
+              body="Track walks, runs, rides, yoga and workouts, set fitness goals and see movement next to your sleep and mood."
+            >
+              <div className={`${PANEL} flex items-center justify-between text-xs`}>
+                <span>
+                  <span className="block font-semibold">Morning walk</span>
+                  <span className="text-muted-foreground">2.4 km · 32 min</span>
+                </span>
+                <span className="text-right">
+                  <span className="block font-serif text-2xl leading-none text-primary">3,980</span>
+                  <span className="text-[0.65rem] text-muted-foreground">steps today</span>
+                </span>
+              </div>
+            </Feature>
+
+            <Feature
               icon={LineChart}
               tint="bg-accent"
-              className="wide md:col-span-6 md:flex-row md:items-center md:justify-between md:gap-10"
+              className="wide md:col-span-4 md:flex-row md:items-center md:justify-between md:gap-8"
               title="Your week, kindly"
               body="A weekly review of plans done, habit rhythm, rest and focus, with predictions for the week ahead. It notices patterns without keeping score."
             >
-              <div className={`${PANEL} flex h-24 w-full items-end gap-2 md:w-80`}>
+              <div className={`${PANEL} flex h-24 w-full items-end gap-2 md:w-56`}>
                 {[40, 65, 50, 90, 70, 35, 55].map((h, i) => (
                   <span key={i} className="flex-1 rounded-t-md bg-primary/50" style={{ height: `${h}%` }} />
                 ))}
@@ -401,7 +485,7 @@ export default function LandingPage() {
               The most personal parts never leave your hands, and everything else is yours to export or erase at any
               time.
             </SectionHead>
-            <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {PRIVACY.map((p) => (
                 <li key={p.title} className="text-center">
                   <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-secondary text-primary">

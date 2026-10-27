@@ -18,6 +18,10 @@ const DISMISSED_KEY = "dovie-install-dismissed";
 const QUIET_FOR_MS = 7 * 24 * 60 * 60 * 1000;
 const SHOW_AFTER_MS = 2500;
 
+// Pages where someone is mid-form (signing up, signing in, resetting a
+// password, entering a code). A banner there would cover the button.
+const QUIET_ROUTES = ["/onboarding", "/login", "/signup", "/forgot", "/reset-password", "/verify"];
+
 // Screens with the phone bottom nav; the banner sits above it there.
 const APP_ROUTES = ["/today", "/goals", "/money", "/journal", "/wellness", "/calendar", "/weekly", "/settings"];
 
@@ -107,7 +111,7 @@ export function InstallPrompt() {
     else dismiss();
   }
 
-  if (!mode || pathname.startsWith("/onboarding")) return null;
+  if (!mode || QUIET_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`))) return null;
   const aboveNav = APP_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
 
   return (
