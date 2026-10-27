@@ -12,4 +12,3 @@ function Placeholder() {
 
 export const CategoryDonut = dynamic(() => import("./category-donut"), { ssr: false, loading: Placeholder });
 export const ForecastChart = dynamic(() => import("./forecast-chart"), { ssr: false, loading: Placeholder });
-export const WeekBars = dynamic(() => import("./week-bars"), { ssr: false, loading: Placeholder });

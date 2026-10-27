@@ -35,7 +35,9 @@ export type WeekSummary = {
   waterGlasses: number;
   journalDays: number;
   checkinDays: number;
-  habits: { id: string; title: string; daysDone: number }[];
+  habits: { id: string; title: string; daysDone: number; dates: string[]; streak: number }[];
+  /** The same totals for the week before, to compare against. */
+  previous: { tasksDone: number; tasksPlanned: number; habitRhythm: number | null; averageSleep: number | null; focusMinutes: number };
   observations: string[];
   suggestions: string[];
 };
@@ -51,7 +53,7 @@ const weekday = (d: string) => formatDate(d, { weekday: "long" });
  * Rules-based notes from numbers only. Each rule needs a few days of data so
  * a single day never turns into a "pattern".
  */
-function observe(days: ReviewDay[], s: Omit<WeekSummary, "observations" | "suggestions" | "habits" | "history">) {
+function observe(days: ReviewDay[], s: Omit<WeekSummary, "observations" | "suggestions" | "habits" | "history" | "previous">) {
   const observations: string[] = [];
   const suggestions: string[] = [];
 
@@ -97,7 +99,7 @@ function observe(days: ReviewDay[], s: Omit<WeekSummary, "observations" | "sugge
   return { observations, suggestions };
 }
 
-/** The 7 days ending on `today`, oldest first. */
+/** The 7 days ending on `today` (any past day works too, to look back), oldest first. */
 export async function fetchWeek(today: string): Promise<WeekSummary> {
   // This week plus the three before it, all in parallel (one round trip).
   const supabase = createClient();
@@ -115,16 +117,21 @@ export async function fetchWeek(today: string): Promise<WeekSummary> {
   const days = weeks[0];
   const history = weeks.slice().reverse().flat();
 
-  const habitTotal = days.reduce((s, d) => s + d.habits_total, 0);
+  const totals = (ds: ReviewDay[]) => {
+    const habitTotal = ds.reduce((s, d) => s + d.habits_total, 0);
+    return {
+      tasksDone: ds.reduce((s, d) => s + d.tasks_done, 0),
+      tasksPlanned: ds.reduce((s, d) => s + d.tasks_planned, 0),
+      habitRhythm: habitTotal ? (Math.min(habitTotal, ds.reduce((s, d) => s + d.habits_done, 0)) / habitTotal) * 100 : null,
+      averageSleep: avg(ds.map((d) => d.sleep_hours)),
+      focusMinutes: ds.reduce((s, d) => s + d.focus_minutes, 0),
+    };
+  };
   const base = {
     days,
-    tasksDone: days.reduce((s, d) => s + d.tasks_done, 0),
-    tasksPlanned: days.reduce((s, d) => s + d.tasks_planned, 0),
-    habitRhythm: habitTotal ? (Math.min(habitTotal, days.reduce((s, d) => s + d.habits_done, 0)) / habitTotal) * 100 : null,
-    averageSleep: avg(days.map((d) => d.sleep_hours)),
+    ...totals(days),
     averageMood: avg(days.map((d) => d.mood)),
     averageScore: avg(days.map((d) => d.score)),
-    focusMinutes: days.reduce((s, d) => s + d.focus_minutes, 0),
     movementMinutes: days.reduce((s, d) => s + d.movement_minutes, 0),
     waterGlasses: days.reduce((s, d) => s + (d.water_glasses ?? 0), 0),
     journalDays: days.filter((d) => d.journaled).length,
@@ -134,7 +141,8 @@ export async function fetchWeek(today: string): Promise<WeekSummary> {
   return {
     ...base,
     history,
-    habits: habits.map((h) => ({ id: h.id, title: h.title, daysDone: h.recent_dates.length })),
+    previous: totals(weeks[1]),
+    habits: habits.map((h) => ({ id: h.id, title: h.title, daysDone: h.recent_dates.length, dates: h.recent_dates, streak: h.streak })),
     ...observe(days, base),
   };
 }
