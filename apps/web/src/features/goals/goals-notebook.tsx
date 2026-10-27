@@ -86,7 +86,12 @@ const CHEERS: Record<number, string> = {
   100: "You did it. Take a moment to enjoy this one.",
 };
 
-const amount = (n: number, unit: string | null) => `${formatAmount(n)}${unit ? ` ${unit}` : ""}`;
+/** "1 book", "3 books": a unit typed in the plural loses its "s" for exactly one. */
+const amount = (n: number, unit: string | null) => {
+  const u = unit && Math.abs(n) === 1 && /[^s]s$/i.test(unit) ? unit.slice(0, -1) : unit;
+  return `${formatAmount(n)}${u ? ` ${u}` : ""}`;
+};
+const count = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /** A progress ring; the number sits in the middle. */
 function Ring({ value, size = 56, stroke = 6, children }: { value: number | null; size?: number; stroke?: number; children?: React.ReactNode }) {
@@ -290,7 +295,7 @@ export function GoalsNotebook({ today }: { today: string }) {
           tilt="-rotate-[0.5deg] [--tape-tilt:-2deg]"
           tone="bg-butter text-butter-foreground"
         >
-          <StickyValue value={advanced ? thisWeek : "–"} unit={advanced ? "steps" : undefined} className="text-3xl sm:text-4xl" />
+          <StickyValue value={advanced ? thisWeek : "–"} unit={advanced ? (thisWeek === 1 ? "step" : "steps") : undefined} className="text-3xl sm:text-4xl" />
         </Sticky>
         <Sticky
           label="Streak"
@@ -656,7 +661,7 @@ function Heatmap({ logs, today, goals }: { logs: GoalLog[]; today: string; goals
       <SectionTitle
         icon={CalendarDays}
         title="Your rhythm"
-        aside={<span className="text-xs text-muted-foreground">{total} steps · {activeDays} days</span>}
+        aside={<span className="text-xs text-muted-foreground">{count(total, "step")} · {count(activeDays, "day")}</span>}
       />
       <div className="overflow-x-auto">
         <div className="grid w-max grid-flow-col grid-rows-7 gap-[3px]" role="img" aria-label={`${total} steps logged over ${weeks} weeks`}>

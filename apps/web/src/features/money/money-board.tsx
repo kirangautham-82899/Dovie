@@ -225,7 +225,7 @@ export function MoneyBoard({ today }: { today: string }) {
         <Sticky
           label="Spent"
           icon={ArrowUpRight}
-          caption={earned ? `${Math.round((spent / earned) * 100)}% of what came in` : `so far in ${monthName}`}
+          caption={earned ? `${Math.round((spent / earned) * 100)}% of income` : `so far in ${monthName}`}
           tilt="rotate-1 [--tape-tilt:3deg]"
           tone="bg-secondary text-secondary-foreground"
         >
@@ -241,7 +241,7 @@ export function MoneyBoard({ today }: { today: string }) {
                 ? `after ${whole(f.billsDueThisMonth)} of bills`
                 : left >= 0
                   ? "yours to plan"
-                  : "spending passed income"
+                  : "more than came in"
           }
           tilt="-rotate-[0.5deg] [--tape-tilt:-2deg]"
           tone="bg-butter text-butter-foreground"

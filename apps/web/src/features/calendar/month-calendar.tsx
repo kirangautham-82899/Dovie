@@ -413,7 +413,7 @@ export function MonthCalendar({ today }: { today: string }) {
                   style={heat ? { backgroundColor: `color-mix(in oklab, var(--secondary) ${heat}%, var(--card))` } : undefined}
                   className={cn(
                     "relative min-w-0 bg-card",
-                    out && "bg-muted/40",
+                    out && "bg-muted/15",
                     dropOn === d && "ring-2 ring-primary ring-inset",
                   )}
                 >

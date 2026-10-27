@@ -57,6 +57,15 @@ const TIMEZONES: string[] = (() => {
   }
 })();
 
+/** The browser's own name for a zone, so aliases like Asia/Kolkata and Asia/Calcutta compare equal. */
+const canonicalZone = (tz: string) => {
+  try {
+    return new Intl.DateTimeFormat("en", { timeZone: tz }).resolvedOptions().timeZone;
+  } catch {
+    return tz;
+  }
+};
+
 const deviceTimezone = () => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -96,7 +105,7 @@ export function SettingsScreen() {
   const user = useAuthUser();
   const factors = useFactors();
 
-  const header = <PageHeader compact {...SETTINGS_HEADER} eyebrow={user.data?.email ? `settings · ${user.data.email}` : "settings"} />;
+  const header = <PageHeader compact {...SETTINGS_HEADER} />;
 
   if (query.isPending)
     return (
@@ -116,6 +125,8 @@ export function SettingsScreen() {
   const profile = query.data;
   const twoStep = !!factors.data?.totp.some((f) => f.status === "verified");
   const google = !!user.data?.identities?.some((i) => i.provider === "google");
+  const hasPassword = !!user.data?.identities?.some((i) => i.provider === "email");
+  const methods = [hasPassword && "Email", google && "Google"].filter(Boolean).join(" & ") || "Email";
   const emailConfirmed = !!user.data?.email_confirmed_at;
   const protections = Number(twoStep) + Number(emailConfirmed);
 
@@ -131,7 +142,7 @@ export function SettingsScreen() {
           tilt="-rotate-1 [--tape-tilt:-4deg]"
           tone="bg-mint text-mint-foreground"
         >
-          <StickyValue value={profile.display_name || "friend"} className="truncate text-2xl sm:text-3xl" />
+          <StickyValue value={profile.display_name || "friend"} className="truncate text-xl sm:text-3xl" />
         </Sticky>
         <Sticky
           label="Protection"
@@ -143,19 +154,19 @@ export function SettingsScreen() {
           <StickyValue value={protections} unit="of 2" className="text-3xl sm:text-4xl" />
         </Sticky>
         <Sticky
-          label="Signed in"
+          label="Signs in with"
           icon={MonitorSmartphone}
           caption={user.data?.last_sign_in_at ? `last sign-in ${ago(user.data.last_sign_in_at)}` : "on this device"}
           tilt="-rotate-[0.5deg] [--tape-tilt:-2deg]"
           tone="bg-sky text-sky-foreground"
           className="col-span-2 md:col-span-1"
         >
-          <StickyValue value={google ? "Google" : "Email"} className="text-2xl sm:text-3xl" />
+          <StickyValue value={methods} className="truncate text-2xl sm:text-3xl" />
         </Sticky>
       </div>
 
-      <div className="mt-8 grid items-start gap-5 lg:grid-cols-[12rem_minmax(0,1fr)]">
-        <nav aria-label="Settings sections" className="lg:sticky lg:top-4">
+      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[12rem_minmax(0,1fr)]">
+        <nav aria-label="Settings sections" className="min-w-0 lg:sticky lg:top-4">
           <ul className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] lg:flex-col lg:overflow-visible">
             {SECTIONS.map((s) => (
               <li key={s.id} className="shrink-0">
@@ -178,6 +189,7 @@ export function SettingsScreen() {
           <PreferencesForm
             key={profile.id}
             profile={profile}
+            email={user.data?.email}
             saving={update.isPending}
             error={error}
             onSave={(v) => {
@@ -190,7 +202,7 @@ export function SettingsScreen() {
             factors={factors.data}
             factorsError={factors.error?.message}
             google={google}
-            hasPassword={!!user.data?.identities?.some((i) => i.provider === "email")}
+            hasPassword={hasPassword}
             emailConfirmed={emailConfirmed}
           />
           <DataSection />
@@ -204,11 +216,13 @@ export function SettingsScreen() {
 /** Profile and Today & look share one form, with a save bar that appears once something changes. */
 function PreferencesForm({
   profile,
+  email,
   saving,
   error,
   onSave,
 }: {
   profile: Profile;
+  email?: string;
   saving: boolean;
   error: string | null;
   onSave: (v: Partial<Profile>) => void;
@@ -265,7 +279,11 @@ function PreferencesForm({
     >
       <Slip className="p-4 sm:p-5">
         <div id="profile" className="scroll-mt-6" />
-        <SectionTitle icon={UserRound} title="Profile" />
+        <SectionTitle
+          icon={UserRound}
+          title="Profile"
+          aside={email && <span className="truncate text-xs text-muted-foreground">{email}</span>}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="What should we call you?">
             <Input maxLength={60} autoComplete="nickname" value={v.name} onChange={(e) => set("name", e.target.value)} />
@@ -280,7 +298,7 @@ function PreferencesForm({
                 ))}
               </select>
             </div>
-            {here && here !== v.timezone && (
+            {here && canonicalZone(here) !== canonicalZone(v.timezone) && (
               <button type="button" onClick={() => set("timezone", here)} className="mt-1.5 text-xs font-semibold text-primary hover:underline">
                 Use this device&apos;s timezone ({here.replace(/_/g, " ")})
               </button>
@@ -450,7 +468,13 @@ function SecuritySection({
   const checks = [
     { ok: twoStep, label: "Two-step verification", detail: twoStep ? "A code from your phone is needed to sign in." : "Add a code from your phone, so a password alone isn't enough." },
     { ok: emailConfirmed, label: "Verified email", detail: emailConfirmed ? "We can reach you if you need to recover the account." : "Confirm your email from the link we sent." },
-    { ok: true, label: google ? "Signed in with Google" : "Password sign-in", detail: google ? "Google protects this sign-in too." : "Use a long password you don't use anywhere else." },
+    {
+      ok: true,
+      label: google && hasPassword ? "Google and password sign-in" : google ? "Google sign-in" : "Password sign-in",
+      detail: hasPassword
+        ? "Use a long password you don't use anywhere else. Change it below."
+        : "Google protects this sign-in too.",
+    },
   ];
 
   return (

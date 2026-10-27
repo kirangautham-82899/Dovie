@@ -74,6 +74,10 @@ export async function fetchGoals(today: string): Promise<GoalsState> {
   if (logs.error && !missing(logs.error)) throw new Error(logs.error.message);
   if (milestones.error && !missing(milestones.error)) throw new Error(milestones.error.message);
 
+  // Removed goals keep their rows (soft delete), so their steps and milestones
+  // are dropped here; otherwise a deleted goal would still count toward the
+  // week, the streak and the rhythm.
+  const live = new Set((rows ?? []).map((g) => g.id as string));
   return {
     advanced,
     goals: (rows ?? []).map((g) => ({
@@ -90,8 +94,8 @@ export async function fetchGoals(today: string): Promise<GoalsState> {
       completed_at: (g.completed_at as string | null) ?? null,
       created_at: g.created_at as string,
     })),
-    logs: advanced ? (logs.data ?? []).map((l) => ({ ...l, amount: Number(l.amount) })) : [],
-    milestones: advanced ? (milestones.data ?? []) : [],
+    logs: advanced ? (logs.data ?? []).filter((l) => live.has(l.goal_id)).map((l) => ({ ...l, amount: Number(l.amount) })) : [],
+    milestones: advanced ? (milestones.data ?? []).filter((m) => live.has(m.goal_id)) : [],
   };
 }
 

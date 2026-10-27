@@ -70,13 +70,29 @@ export const TEMPLATES = {
 
 export type TemplateId = keyof typeof TEMPLATES;
 
-/** Adds a template's starter tasks (for today) and habits. Everything is editable afterwards. */
+/**
+ * Adds a template's starter tasks (for today) and habits. Everything is editable afterwards.
+ * Anything already there is skipped, so applying a template twice (in onboarding and again
+ * from Wellness, say) never leaves duplicates.
+ */
 export async function applyTemplate(id: TemplateId, today: string) {
   const supabase = createClient();
   const t = TEMPLATES[id];
+  const [haveTasks, haveHabits] = await Promise.all([
+    supabase.from("tasks").select("title").eq("due_date", today).is("deleted_at", null),
+    supabase.from("habits").select("title").is("deleted_at", null),
+  ]);
+  if (haveTasks.error) throw new Error(haveTasks.error.message);
+  if (haveHabits.error) throw new Error(haveHabits.error.message);
+  const key = (s: string) => s.trim().toLowerCase();
+  const taskTitles = new Set(haveTasks.data.map((r) => key(r.title)));
+  const habitTitles = new Set(haveHabits.data.map((r) => key(r.title)));
+  const newTasks = t.tasks.filter((title) => !taskTitles.has(key(title)));
+  const newHabits = t.habits.filter((title) => !habitTitles.has(key(title)));
+
   const [tasks, habits] = await Promise.all([
-    supabase.from("tasks").insert(t.tasks.map((title) => ({ title, due_date: today }))),
-    supabase.from("habits").insert(t.habits.map((title) => ({ title }))),
+    newTasks.length ? supabase.from("tasks").insert(newTasks.map((title) => ({ title, due_date: today }))) : { error: null },
+    newHabits.length ? supabase.from("habits").insert(newHabits.map((title) => ({ title }))) : { error: null },
   ]);
   if (tasks.error) throw new Error(tasks.error.message);
   if (habits.error) throw new Error(habits.error.message);

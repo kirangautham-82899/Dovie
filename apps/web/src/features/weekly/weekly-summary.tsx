@@ -83,10 +83,15 @@ function headline(w: WeekSummary) {
           : "A gentler week";
   const bits: string[] = [];
   if (w.tasksPlanned) bits.push(`${w.tasksDone} of ${w.tasksPlanned} plans done`);
-  if (w.habitRhythm !== null) bits.push(`habits at ${Math.round(w.habitRhythm)}%`);
+  // A 0% habit week on its own reads like a scolding; it only joins in next to other numbers.
+  if (w.habitRhythm !== null && (w.habitRhythm > 0 || bits.length)) bits.push(`habits at ${Math.round(w.habitRhythm)}%`);
   if (w.averageSleep !== null) bits.push(`${w.averageSleep.toFixed(1)}h of sleep a night`);
   const tail = mood ? `, and you felt mostly ${mood}` : "";
-  return { tone, text: bits.length ? `${bits.join(", ")}${tail}.` : "Log a few plans or check-ins and this page fills in." };
+  if (!bits.length) {
+    return { tone, text: "Nothing logged yet this week, and that's okay. A plan, a habit or a quick check-in starts the picture." };
+  }
+  const text = `${bits.join(", ")}${tail}.`;
+  return { tone, text: text[0].toUpperCase() + text.slice(1) };
 }
 
 function useReflection(end: string) {
