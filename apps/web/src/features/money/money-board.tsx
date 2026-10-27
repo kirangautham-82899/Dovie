@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, CalendarClock, PiggyBank, Plus, ReceiptText, Target, Trash2, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CalendarClock, Check, PiggyBank, Plus, ReceiptText, Target, Trash2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Slip, Sticky, StickyValue } from "@/components/notebook";
@@ -67,13 +67,22 @@ function StatusPill({ status }: { status: keyof typeof FORECAST_STATUS }) {
   return <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold", s.className)}>{s.label}</span>;
 }
 
+/** Planning actions, grouped apart from the everyday in/out buttons. */
+const PLAN_ACTIONS = [
+  { dialog: "bill", label: "Bill", icon: CalendarClock },
+  { dialog: "budget", label: "Budget", icon: Target },
+  { dialog: "goal", label: "Goal", icon: PiggyBank },
+] as const;
+
+/** Quiet until the row is hovered or focused; always shown on touch screens, which can't hover. */
 function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       type="button"
       aria-label={label}
+      title={label}
       onClick={onClick}
-      className="rounded p-1 text-muted-foreground opacity-60 hover:bg-muted group-hover:opacity-100"
+      className="-mr-1 flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/70 transition outline-none group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 focus-visible:ring-3 focus-visible:ring-destructive/25 [@media(hover:hover)]:opacity-0"
     >
       <Trash2 className="size-3.5" />
     </button>
@@ -109,25 +118,32 @@ export function MoneyBoard({ today }: { today: string }) {
       {...MONEY_HEADER}
       eyebrow={`money, gently · ${monthName}`}
       action={
-        <>
+        <div className="flex flex-wrap items-center gap-2">
           {incomeReady && (
-            <Button size="sm" onClick={() => setDialog("income")}>
-              <Plus /> Income
+            <Button
+              onClick={() => setDialog("income")}
+              className="bg-mint text-mint-foreground shadow-soft hover:-translate-y-px hover:brightness-[0.97] active:translate-y-0"
+            >
+              <ArrowDownLeft /> Income
             </Button>
           )}
-          <Button size="sm" onClick={() => setDialog("expense")}>
-            <Plus /> Expense
+          <Button variant="solid" onClick={() => setDialog("expense")}>
+            <ArrowUpRight /> Expense
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => setDialog("bill")}>
-            Bill
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => setDialog("budget")}>
-            Budget
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => setDialog("goal")}>
-            Goal
-          </Button>
-        </>
+          <div role="group" aria-label="Plan ahead" className="flex items-center rounded-full border bg-card/80 p-0.5 shadow-soft">
+            {PLAN_ACTIONS.map((a) => (
+              <Button
+                key={a.dialog}
+                size="sm"
+                variant="ghost"
+                onClick={() => setDialog(a.dialog)}
+                className="h-8 px-3 text-muted-foreground hover:text-foreground"
+              >
+                <a.icon /> {a.label}
+              </Button>
+            ))}
+          </div>
+        </div>
       }
     />
   );
@@ -268,7 +284,20 @@ export function MoneyBoard({ today }: { today: string }) {
                   <EmptyState
                     title={filter === "in" ? "Nothing in yet" : filter === "out" ? "Nothing spent yet" : "A fresh page"}
                     detail="Add income and expenses as they happen. Dovie never connects to banks."
-                  />
+                  >
+                    <div className="flex flex-wrap gap-2">
+                      {filter !== "in" && (
+                        <Button size="sm" variant="secondary" onClick={() => setDialog("expense")}>
+                          <Plus /> Expense
+                        </Button>
+                      )}
+                      {incomeReady && filter !== "out" && (
+                        <Button size="sm" variant="outline" onClick={() => setDialog("income")}>
+                          <Plus /> Income
+                        </Button>
+                      )}
+                    </div>
+                  </EmptyState>
                 ) : (
                   <ul className="max-h-96 divide-y overflow-y-auto">
                     {ledger.map((r) => (
@@ -307,7 +336,11 @@ export function MoneyBoard({ today }: { today: string }) {
               <Card className={dense}>
                 <SectionTitle icon={PiggyBank} title="Money goals" />
                 {goals.length === 0 ? (
-                  <EmptyState title="Something to look forward to" detail="A money goal can be tiny or far away." />
+                  <EmptyState title="Something to look forward to" detail="A money goal can be tiny or far away.">
+                    <Button size="sm" variant="secondary" onClick={() => setDialog("goal")}>
+                      <PiggyBank /> Make a goal
+                    </Button>
+                  </EmptyState>
                 ) : (
                   <ul className="space-y-3">
                     {goals.map((g) => {
@@ -324,7 +357,12 @@ export function MoneyBoard({ today }: { today: string }) {
                               </p>
                             </div>
                             {gf && gf.status !== "no-data" && <StatusPill status={gf.status} />}
-                            <Button size="xs" variant="secondary" onClick={() => setDialog({ savingsFor: g.id, title: g.title })}>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              aria-label={`Add savings to ${g.title}`}
+                              onClick={() => setDialog({ savingsFor: g.id, title: g.title })}
+                            >
                               <Plus /> Add
                             </Button>
                             <RemoveButton
@@ -347,7 +385,11 @@ export function MoneyBoard({ today }: { today: string }) {
               <Card className={dense}>
                 <SectionTitle icon={Target} title="Where it went" />
                 {categories.length === 0 ? (
-                  <EmptyState title="A picture will emerge" detail="Add a few expenses, or set a budget for a category." />
+                  <EmptyState title="A picture will emerge" detail="Add a few expenses, or set a budget for a category.">
+                    <Button size="sm" variant="secondary" onClick={() => setDialog("budget")}>
+                      <Target /> Set a budget
+                    </Button>
+                  </EmptyState>
                 ) : (
                   <ul className="space-y-3">
                     {categories.map((c) => {
@@ -390,7 +432,11 @@ export function MoneyBoard({ today }: { today: string }) {
                   }
                 />
                 {bills.length === 0 ? (
-                  <EmptyState title="Bills, when you're ready" detail="Add due dates so nothing sneaks up on you." />
+                  <EmptyState title="Bills, when you're ready" detail="Add due dates so nothing sneaks up on you.">
+                    <Button size="sm" variant="secondary" onClick={() => setDialog("bill")}>
+                      <CalendarClock /> Add a bill
+                    </Button>
+                  </EmptyState>
                 ) : (
                   <ul className="divide-y">
                     {bills.map((b) => {
@@ -404,8 +450,15 @@ export function MoneyBoard({ today }: { today: string }) {
                             </p>
                           </div>
                           {b.amount_paise !== null && <span className="text-sm tabular-nums">{formatPaise(b.amount_paise)}</span>}
-                          <Button size="xs" variant="outline" onClick={() => m.markPaid.mutate(b.id)} disabled={m.markPaid.isPending}>
-                            Paid
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            aria-label={`Mark ${b.title} paid`}
+                            onClick={() => m.markPaid.mutate(b.id)}
+                            loading={m.markPaid.isPending && m.markPaid.variables === b.id}
+                            className="hover:border-mint-foreground/30 hover:bg-mint hover:text-mint-foreground"
+                          >
+                            {!(m.markPaid.isPending && m.markPaid.variables === b.id) && <Check />} Paid
                           </Button>
                           <RemoveButton
                             label={`Remove ${b.title}`}
@@ -432,19 +485,19 @@ export function MoneyBoard({ today }: { today: string }) {
       </p>
 
       <Modal open={dialog === "income"} title="Add income" onClose={close}>
-        <IncomeForm today={today} onSave={(v) => m.addIncome.mutate(v, { onSuccess: close })} />
+        <IncomeForm today={today} pending={m.addIncome.isPending} onSave={(v) => m.addIncome.mutate(v, { onSuccess: close })} />
       </Modal>
       <Modal open={dialog === "expense"} title="Add an expense" onClose={close}>
-        <ExpenseForm today={today} onSave={(v) => m.addExpense.mutate(v, { onSuccess: close })} />
+        <ExpenseForm today={today} pending={m.addExpense.isPending} onSave={(v) => m.addExpense.mutate(v, { onSuccess: close })} />
       </Modal>
       <Modal open={dialog === "bill"} title="Add a bill" onClose={close}>
-        <BillForm today={today} onSave={(v) => m.addBill.mutate(v, { onSuccess: close })} />
+        <BillForm today={today} pending={m.addBill.isPending} onSave={(v) => m.addBill.mutate(v, { onSuccess: close })} />
       </Modal>
       <Modal open={dialog === "budget"} title="Set a monthly budget" onClose={close}>
-        <BudgetForm onSave={(v) => m.setBudget.mutate(v, { onSuccess: close })} />
+        <BudgetForm pending={m.setBudget.isPending} onSave={(v) => m.setBudget.mutate(v, { onSuccess: close })} />
       </Modal>
       <Modal open={dialog === "goal"} title="Make a money goal" onClose={close}>
-        <GoalForm today={today} onSave={(v) => m.addGoal.mutate(v, { onSuccess: close })} />
+        <GoalForm today={today} pending={m.addGoal.isPending} onSave={(v) => m.addGoal.mutate(v, { onSuccess: close })} />
       </Modal>
       <Modal
         open={typeof dialog === "object" && dialog !== null}
@@ -454,6 +507,7 @@ export function MoneyBoard({ today }: { today: string }) {
         <AmountForm
           label="How much did you set aside?"
           submit="Add savings"
+          pending={m.addSavings.isPending}
           onSave={(amount) =>
             typeof dialog === "object" && dialog && m.addSavings.mutate({ id: dialog.savingsFor, amount }, { onSuccess: close })
           }
@@ -485,9 +539,11 @@ function AmountInput({ value, onChange }: { value: string; onChange: (v: string)
 
 function ExpenseForm({
   today,
+  pending,
   onSave,
 }: {
   today: string;
+  pending?: boolean;
   onSave: (v: { amount_paise: number; category: string; note: string; spent_on: string }) => void;
 }) {
   const amount = useAmount();
@@ -520,8 +576,8 @@ function ExpenseForm({
       <Field label="When">
         <Input type="date" max={today} value={date} onChange={(e) => setDate(e.target.value)} />
       </Field>
-      <Button type="submit" size="lg" className="w-full" disabled={!amount.paise || !date}>
-        Save
+      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!amount.paise || !date}>
+        Add expense
       </Button>
     </form>
   );
@@ -529,9 +585,11 @@ function ExpenseForm({
 
 function IncomeForm({
   today,
+  pending,
   onSave,
 }: {
   today: string;
+  pending?: boolean;
   onSave: (v: { amount_paise: number; source: string; note: string; received_on: string }) => void;
 }) {
   const amount = useAmount();
@@ -564,8 +622,8 @@ function IncomeForm({
       <Field label="Received on">
         <Input type="date" max={today} value={date} onChange={(e) => setDate(e.target.value)} />
       </Field>
-      <Button type="submit" size="lg" className="w-full" disabled={!amount.paise || !date}>
-        Save
+      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!amount.paise || !date}>
+        Add income
       </Button>
     </form>
   );
@@ -573,9 +631,11 @@ function IncomeForm({
 
 function BillForm({
   today,
+  pending,
   onSave,
 }: {
   today: string;
+  pending?: boolean;
   onSave: (v: { title: string; amount_paise: number | null; due_date: string; recurrence: Recurrence }) => void;
 }) {
   const amount = useAmount();
@@ -610,14 +670,14 @@ function BillForm({
           ))}
         </select>
       </Field>
-      <Button type="submit" size="lg" className="w-full" disabled={!title.trim() || !due || (amount.raw !== "" && !amount.paise)}>
-        Save
+      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!title.trim() || !due || (amount.raw !== "" && !amount.paise)}>
+        Add bill
       </Button>
     </form>
   );
 }
 
-function BudgetForm({ onSave }: { onSave: (v: { category: string; limit: number }) => void }) {
+function BudgetForm({ pending, onSave }: { pending?: boolean; onSave: (v: { category: string; limit: number }) => void }) {
   const amount = useAmount();
   const [category, setCategory] = useState<string>("Food");
   return (
@@ -638,8 +698,8 @@ function BudgetForm({ onSave }: { onSave: (v: { category: string; limit: number 
       <Field label="Monthly limit" hint="Setting a category again replaces its limit.">
         <AmountInput value={amount.raw} onChange={amount.setRaw} />
       </Field>
-      <Button type="submit" size="lg" className="w-full" disabled={!amount.paise}>
-        Save
+      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!amount.paise}>
+        Set budget
       </Button>
     </form>
   );
@@ -647,9 +707,11 @@ function BudgetForm({ onSave }: { onSave: (v: { category: string; limit: number 
 
 function GoalForm({
   today,
+  pending,
   onSave,
 }: {
   today: string;
+  pending?: boolean;
   onSave: (v: { title: string; target_paise: number; target_date: string | null }) => void;
 }) {
   const amount = useAmount();
@@ -674,14 +736,24 @@ function GoalForm({
           <Input type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
       </div>
-      <Button type="submit" size="lg" className="w-full" disabled={!title.trim() || !amount.paise}>
-        Save
+      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!title.trim() || !amount.paise}>
+        Make goal
       </Button>
     </form>
   );
 }
 
-function AmountForm({ label, submit, onSave }: { label: string; submit: string; onSave: (paise: number) => void }) {
+function AmountForm({
+  label,
+  submit,
+  pending,
+  onSave,
+}: {
+  label: string;
+  submit: string;
+  pending?: boolean;
+  onSave: (paise: number) => void;
+}) {
   const amount = useAmount();
   return (
     <form
@@ -694,7 +766,7 @@ function AmountForm({ label, submit, onSave }: { label: string; submit: string; 
       <Field label={label}>
         <AmountInput value={amount.raw} onChange={amount.setRaw} />
       </Field>
-      <Button type="submit" size="lg" className="w-full" disabled={!amount.paise}>
+      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!amount.paise}>
         {submit}
       </Button>
     </form>
