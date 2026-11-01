@@ -68,7 +68,7 @@ Forecasts your month's spending and predicts next week from your own numbers.
 
 | Module | What it does |
 |---|---|
-| **☀️ Today** | Your top three priorities, the rest of the list, habits, a one-tap wellness check-in, bills due soon and an evening check-in with a daily score. Unfinished tasks carry over automatically. |
+| **☀️ Today** | A daily "Dovie noticed" insight, your top three priorities, the rest of the list, habits, a one-tap wellness check-in, bills due soon and an evening check-in with a daily score. Unfinished tasks carry over automatically. |
 | **🗓️ Planner** | A month calendar with a checklist for every day: add tasks to any date, star up to three priorities, tick them off, and move unfinished ones forward. Days you clear get a check mark. |
 | **🏃 Fitness** | A **live workout tracker** for 11 activities: moving time, GPS distance, pace, splits, route, step counter and cadence, calories, climb, laps and Bluetooth heart-rate straps. Workouts keep recording on every screen, survive a closed app and sync when you're back online. Plus activity rings, an all-day step counter, personal bests, history and a weight log. |
 | **🎯 Goals** | Growth goals with progress, a habit tracker with streaks, daily fitness targets and a free-form movement log. |
@@ -280,7 +280,8 @@ Meta-tag verification also works: set `GOOGLE_SITE_VERIFICATION` and/or `BING_SI
 - [x] SEO: sitemap, structured data, Google and Bing verified
 - [ ] Custom domain
 - [ ] Email bill reminders (Resend + `pg_cron`)
-- [ ] Installable offline PWA and web push
+- [x] Installable PWA with offline support for visited pages
+- [ ] Web push reminders and background sync
 - [ ] Flutter mobile app on the same backend
 
 See [`PLAN.md`](PLAN.md) for the full plan.

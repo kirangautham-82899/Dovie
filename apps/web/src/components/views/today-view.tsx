@@ -13,6 +13,7 @@ import { WellnessToday } from "@/features/wellness/wellness-today";
 import { BillsToday } from "@/features/money/bills-today";
 import { TodayGlance } from "@/features/today/today-glance";
 import { QuickNotes } from "@/features/today/quick-notes";
+import { DailyInsightCard } from "@/features/today/daily-insight-card";
 import { dailyMessage } from "@/features/today/daily-message";
 import { TodayGate, ViewSkeleton } from "./today-gate";
 
@@ -53,6 +54,9 @@ export function TodayView() {
               subtitle={<span className="highlighter font-hand text-xl leading-snug text-foreground sm:text-2xl">{dailyMessage(today)}</span>}
             />
             <TodayGlance today={today} />
+            <div className="mt-8 empty:hidden">
+              <DailyInsightCard today={today} wantsMoney={has("money")} />
+            </div>
             <div className="mt-10 grid items-start gap-8 lg:grid-cols-[1.25fr_1fr] lg:gap-10">
               <div className="min-w-0">{has("tasks") && <TasksSection today={today} />}</div>
               <QuickNotes />
