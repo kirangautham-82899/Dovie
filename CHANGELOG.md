@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-11-01
+
+### Offline
+- **Pages you've opened before open again with no connection.** The service worker (`public/sw.js`) now keeps static
+  files and visited pages, and shows a friendly `/offline` page for a page that was never opened. It never touches
+  `/api`, `/auth`, other sites (Supabase) or anything that isn't a plain GET, and caches no account data. Saved pages
+  are cleared on sign-out. Caching only switches on for production builds (`/sw.js?cache=1`), so development never
+  serves stale files. A slim "You're offline" bar appears when the connection drops. Not yet included: web push and
+  background sync (see the roadmap).
+
+### Today
+- **"Dovie noticed"** is a card under the sticky notes that picks the one most useful thing from numbers the app has
+  already worked out on the device: a pricier day today, a budget heading over, the strongest Mood × Money pattern,
+  or good news. While Dovie is still learning, it shows how many check-in days are left. Logic lives in
+  `features/today/daily-insight.ts`, covered by `npm run test:daily-insight`.
+
+### Quick add
+- A floating **+** button on the daily screens adds a plan or an expense in a few seconds, from wherever you are. It is
+  hidden on Fitness, Journal and Settings.
+
+### Fixes
+- The install banner now sits above the bottom nav on the Planner and Fitness screens too.
+
 ## 2026-10-26
 
 ### Wellness

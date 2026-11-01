@@ -5,6 +5,7 @@
 // screen reads to show what is working.
 
 import { useSyncExternalStore } from "react";
+import { SW_URL } from "@/lib/service-worker";
 import { liveStore } from "./live-store";
 
 export type SensorStatus = {
@@ -172,7 +173,7 @@ export async function showWorkoutNotification(label: string) {
   try {
     if (Notification.permission === "default") await Notification.requestPermission();
     if (Notification.permission !== "granted") return;
-    const reg = await navigator.serviceWorker.register("/sw.js");
+    const reg = await navigator.serviceWorker.register(SW_URL);
     await navigator.serviceWorker.ready;
     await reg.showNotification(`${label} in progress`, {
       body: "Dovie is keeping time. Tap to return to your workout.",

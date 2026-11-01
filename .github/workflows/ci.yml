@@ -25,6 +25,7 @@ jobs:
       - run: npm run test:predict
       - run: npm run test:tracker
       - run: npm run test:mood-money
+      - run: npm run test:daily-insight
       - run: npm run build
         env:
           # Placeholders: the build does not contact Supabase.

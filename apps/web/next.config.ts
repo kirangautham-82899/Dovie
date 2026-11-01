@@ -53,7 +53,18 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // The browser must always re-check the service worker, or an old copy
+      // could outlive an update.
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        ],
+      },
+    ];
   },
   // A sitemap submitted without ".xml" would otherwise hit the sign-in
   // redirect and hand crawlers an HTML page. Config redirects run before the proxy.

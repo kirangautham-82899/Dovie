@@ -23,7 +23,7 @@ const SHOW_AFTER_MS = 2500;
 const QUIET_ROUTES = ["/onboarding", "/login", "/signup", "/forgot", "/reset-password", "/verify"];
 
 // Screens with the phone bottom nav; the banner sits above it there.
-const APP_ROUTES = ["/today", "/goals", "/money", "/journal", "/wellness", "/calendar", "/weekly", "/settings"];
+const APP_ROUTES = ["/today", "/planner", "/fitness", "/goals", "/money", "/journal", "/wellness", "/calendar", "/weekly", "/settings"];
 
 function recentlyDismissed() {
   try {

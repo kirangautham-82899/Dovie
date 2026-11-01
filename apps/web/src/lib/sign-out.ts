@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { clearAppCache } from "@/lib/app-cache";
+import { clearSavedPages } from "@/lib/service-worker";
 
 /**
  * Signs out this device and leaves with a full page load. The reload is the
@@ -16,6 +17,7 @@ export async function signOutAndLeave(to = "/login") {
   } finally {
     // Last thing before leaving, so a pending cache save can't write it back.
     clearAppCache();
+    clearSavedPages();
     window.location.replace(to);
   }
 }
