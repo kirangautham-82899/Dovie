@@ -50,7 +50,7 @@ Warm copy, soft pastels and a "progress, not pressure" mindset in every screen.
 <td width="33%" valign="top">
 
 **🔒 Private by default**<br/>
-Journal entries are encrypted in your browser. No bank logins, no ads, no selling data.
+Your journal is readable only by you. No bank logins, no ads, no selling data.
 
 </td>
 <td width="33%" valign="top">
@@ -73,7 +73,7 @@ Forecasts your month's spending and predicts next week from your own numbers.
 | **🏃 Fitness** | A **live workout tracker** for 11 activities: moving time, GPS distance, pace, splits, route, step counter and cadence, calories, climb, laps and Bluetooth heart-rate straps. Workouts keep recording on every screen, survive a closed app and sync when you're back online. Plus activity rings, an all-day step counter, personal bests, history and a weight log. |
 | **🎯 Goals** | Growth goals with progress, a habit tracker with streaks, daily fitness targets and a free-form movement log. |
 | **💰 Money** | Expense tracker and budget planner in ₹: bills that roll forward when paid, monthly budgets by category, savings goals and a **month-end spending forecast**. The **AI savings coach** spots overspending, small repeat purchases and bills worth reviewing, then builds a personal saving plan with a 7-day challenge. Amounts are stored as integer paise. |
-| **📖 Journal** | A private diary with a daily prompt, gratitude line and mood. **AES-256-GCM encrypted in the browser** with a passphrase and a one-time recovery key. |
+| **📖 Journal** | A private diary with a daily prompt, gratitude line and mood. Pages are **readable only by their owner** (row-level security) and never used for insights. |
 | **💗 Wellness** | Sleep, water, energy and mood tracking, a kind focus timer and starter routines (Student, Gym beginner, 9-to-5). |
 | **📅 Calendar** | A seven-day planner with time blocks; move tasks between days in one tap. |
 | **📈 Weekly review** | Plans done, habit rhythm, rest and focus, rule-based observations and **next-week predictions** with weekday patterns. |
@@ -106,7 +106,6 @@ Dovie's predictions run **in the browser on your own entries**: free, instant an
 ```mermaid
 flowchart LR
     U[Browser<br/>Next.js client] -->|RLS-protected queries| S[(Supabase<br/>Postgres + Auth)]
-    U -->|encrypts journal locally| U
     U -->|totals only| A["/api/insights<br/>Vercel function"]
     A -->|structured output| C[Gemini or Claude]
     P[proxy.ts<br/>local JWT check] --> U
@@ -195,7 +194,6 @@ npm run lint
 
 | Script | What it checks | Needs Supabase? |
 |---|---|---|
-| `npm run test:crypto` | Journal encryption against the spec's test vectors, plus recovery-key round trips | No |
 | `npm run test:forecast` | Month-end spending forecast maths | No |
 | `npm run test:predict` | Next-week prediction maths | No |
 | `npm run test:rls` | Two users can't see each other's data | Yes |
@@ -224,7 +222,7 @@ Dovie is registered with **Google Search Console** and **Bing Webmaster Tools**.
 
 | Piece | Where | Notes |
 |---|---|---|
-| Title, description, keywords, Open Graph, Twitter card | `src/app/layout.tsx`, `src/lib/site.ts` | Keyword-targeted copy (daily planner, habit tracker, expense tracker, budget planner, encrypted journal…) |
+| Title, description, keywords, Open Graph, Twitter card | `src/app/layout.tsx`, `src/lib/site.ts` | Keyword-targeted copy (daily planner, habit tracker, expense tracker, budget planner, private journal…) |
 | Share image | `src/app/opengraph-image.tsx` | Generated at build time with `next/og` |
 | Structured data | `src/app/page.tsx` | JSON-LD for the app (`SoftwareApplication`) and the FAQ |
 | `robots.txt` | `src/app/robots.ts` | Allows public pages; blocks the signed-in screens, `/api/` and `/auth/` |
@@ -275,7 +273,7 @@ Meta-tag verification also works: set `GOOGLE_SITE_VERIFICATION` and/or `BING_SI
 
 - [x] Planner, habits, fitness, check-ins and daily score
 - [x] Money: expenses, bills, budgets, savings goals and forecasts
-- [x] Encrypted journal with recovery key
+- [x] Private journal with daily prompts and mood
 - [x] Wellness, calendar and weekly review with predictions
 - [x] SEO: sitemap, structured data, Google and Bing verified
 - [ ] Custom domain
