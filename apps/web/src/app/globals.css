@@ -59,6 +59,8 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  /* Pastels are for fills. As text, "primary" uses a deeper shade that can be read. */
+  --text-color-primary: var(--primary-text);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -77,7 +79,8 @@
    from them. Set data-accent on a wrapper (or <html>) to change the page colour.
      --hue   the accent        --hue2 / --hue3  companion washes
      --ps    saturation        --pl   lightness of the primary
-     --ts    how strongly tints carry the hue */
+     --ts    how strongly tints carry the hue
+     --sl    lightness of accent-coloured text (npm run test:contrast) */
 :root {
   --hue: 343;
   --hue2: 280;
@@ -85,14 +88,15 @@
   --ps: 66%;
   --pl: 73%;
   --ts: 1;
+  --sl: 38%;
 }
-[data-accent="rose"] { --hue: 343; --hue2: 280; --hue3: 18; --ps: 66%; --pl: 73%; --ts: 1; }
-[data-accent="mint"] { --hue: 156; --hue2: 200; --hue3: 45; --ps: 36%; --pl: 66%; --ts: 0.6; }
-[data-accent="lilac"] { --hue: 266; --hue2: 330; --hue3: 200; --ps: 58%; --pl: 79%; --ts: 0.9; }
-[data-accent="sky"] { --hue: 212; --hue2: 266; --hue3: 160; --ps: 68%; --pl: 75%; --ts: 0.85; }
-[data-accent="butter"] { --hue: 42; --hue2: 18; --hue3: 156; --ps: 86%; --pl: 69%; --ts: 0.9; }
-[data-accent="peach"] { --hue: 18; --hue2: 343; --hue3: 44; --ps: 84%; --pl: 77%; --ts: 1; }
-[data-accent="coral"] { --hue: 8; --hue2: 330; --hue3: 40; --ps: 80%; --pl: 71%; --ts: 1; }
+[data-accent="rose"] { --hue: 343; --hue2: 280; --hue3: 18; --ps: 66%; --pl: 73%; --ts: 1; --sl: 38%; }
+[data-accent="mint"] { --hue: 156; --hue2: 200; --hue3: 45; --ps: 36%; --pl: 66%; --ts: 0.6; --sl: 33%; }
+[data-accent="lilac"] { --hue: 266; --hue2: 330; --hue3: 200; --ps: 58%; --pl: 79%; --ts: 0.9; --sl: 38%; }
+[data-accent="sky"] { --hue: 212; --hue2: 266; --hue3: 160; --ps: 68%; --pl: 75%; --ts: 0.85; --sl: 38%; }
+[data-accent="butter"] { --hue: 42; --hue2: 18; --hue3: 156; --ps: 86%; --pl: 69%; --ts: 0.9; --sl: 32%; }
+[data-accent="peach"] { --hue: 18; --hue2: 343; --hue3: 44; --ps: 84%; --pl: 77%; --ts: 1; --sl: 38%; }
+[data-accent="coral"] { --hue: 8; --hue2: 330; --hue3: 40; --ps: 80%; --pl: 71%; --ts: 1; --sl: 38%; }
 
 :root, [data-accent] {
   --ds: calc(0.5 + 0.5 * var(--ts));
@@ -106,7 +110,8 @@
   --primary: hsl(var(--hue) var(--ps) var(--pl));
   --primary-foreground: hsl(var(--hue) 40% 16%);
   --secondary: hsl(calc(var(--hue) + 2) calc(85% * var(--ts)) 95%);
-  --secondary-foreground: hsl(var(--hue) calc(var(--ps) * 0.7) 38%);
+  --secondary-foreground: hsl(var(--hue) calc(var(--ps) * 0.7) var(--sl));
+  --primary-text: var(--secondary-foreground);
   --muted: hsl(30 14% 95%);
   --muted-foreground: hsl(330 5% 42%);
   --accent: hsl(18 92% 93%);
@@ -143,6 +148,10 @@
   --wash-3: hsl(var(--hue3) 95% 88%);
   --blush-gradient: linear-gradient(135deg, hsl(var(--hue) calc(90% * var(--ts)) 94%) 0%, hsl(var(--hue2) 70% 95%) 45%, hsl(var(--hue3) 95% 93%) 100%);
   --rose-gradient: linear-gradient(135deg, var(--primary) 0%, hsl(var(--hue2) 60% 68%) 55%, hsl(var(--hue3) 88% 72%) 100%);
+  /* The same three hues, deep enough to read as large heading text. */
+  --text-2: hsl(var(--hue2) 45% 40%);
+  --text-3: hsl(var(--hue3) 70% 33%);
+  --text-gradient: linear-gradient(135deg, var(--primary-text) 0%, var(--text-2) 55%, var(--text-3) 100%);
 }
 
 .dark, .dark [data-accent] {
@@ -154,6 +163,8 @@
   --popover-foreground: var(--foreground);
   --primary: hsl(var(--hue) calc(var(--ps) + 11%) 72%);
   --primary-foreground: hsl(calc(var(--hue) - 13) 30% 10%);
+  /* On dark surfaces the pastel itself reads well. */
+  --primary-text: var(--primary);
   --secondary: hsl(calc(var(--hue) - 5) calc(30% * var(--ds)) 20%);
   --secondary-foreground: hsl(var(--hue) calc(80% * var(--ds)) 88%);
   --muted: hsl(280 6% 18%);
@@ -188,6 +199,9 @@
   --sidebar-ring: var(--primary);
   --blush-gradient: linear-gradient(135deg, hsl(var(--hue) calc(32% * var(--ds)) 18%) 0%, hsl(var(--hue2) 22% 17%) 50%, hsl(var(--hue3) 28% 17%) 100%);
   --rose-gradient: linear-gradient(135deg, var(--primary) 0%, hsl(var(--hue2) 60% 72%) 55%, hsl(var(--hue3) 75% 70%) 100%);
+  --text-2: hsl(var(--hue2) 60% 72%);
+  --text-3: hsl(var(--hue3) 75% 70%);
+  --text-gradient: var(--rose-gradient);
 }
 
 @layer base {
@@ -237,7 +251,7 @@
     background-image: var(--blush-gradient);
   }
   .text-rose {
-    background-image: var(--rose-gradient);
+    background-image: var(--text-gradient);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

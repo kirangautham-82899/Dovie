@@ -3,6 +3,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Check, ChevronDown, Loader2, PiggyBank, RotateCcw, Sparkles, Target, Trophy } from "lucide-react";
+import { AdviceNote } from "@/components/advice-note";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ChoicePills } from "@/components/field";
@@ -127,6 +128,7 @@ export function SavingsCoach({ today, data, incomePaise }: { today: string; data
           )
         }
       />
+      <AdviceNote className="mb-3">Not financial advice. Savings ideas are estimates from your own entries.</AdviceNote>
 
       {hasData && !open ? (
         <button type="button" onClick={() => setOpen(true)} className="text-left text-sm text-muted-foreground hover:text-foreground">

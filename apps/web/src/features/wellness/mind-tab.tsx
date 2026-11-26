@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdviceNote } from "@/components/advice-note";
 import { Slip } from "@/components/notebook";
 import { Button } from "@/components/ui/button";
 import { ErrorNote } from "@/components/page-header";
@@ -18,6 +19,7 @@ export function MindTab({ today }: { today: string }) {
 
   return (
     <div className="space-y-8">
+      <AdviceNote>Not medical or mental-health advice, and not for emergencies. Support contacts are at the bottom of this page.</AdviceNote>
       {error && <ErrorNote message={error} />}
       {m.query.isError && <ErrorNote message={`Could not load your check-ins: ${m.query.error.message}`} onRetry={() => m.query.refetch()} />}
 

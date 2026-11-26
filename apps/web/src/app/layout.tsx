@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Caveat, DM_Sans, Fraunces } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { PrivateAnalytics } from "@/components/private-analytics";
 import { InstallPrompt } from "@/components/install-prompt";
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -83,6 +84,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
         <InstallPrompt />
+        {/* Vercel serves the analytics script; elsewhere it would only 404. */}
+        {process.env.VERCEL ? <PrivateAnalytics /> : null}
       </body>
     </html>
   );

@@ -1,7 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { ApiError, GoogleGenAI } from "@google/genai";
 import { z } from "zod";
+import { askModel, configuredProviders, fail, notSetUp } from "@/lib/ai-providers";
+import { reportFailure } from "@/lib/monitoring/report";
 import { createClient } from "@/lib/supabase/server";
 
 // Shared server path for the "Ask Dovie" insights. Each route supplies the
@@ -57,8 +56,6 @@ async function readJson(request: Request): Promise<unknown> {
   }
 }
 
-const fail = (error: string, status: number) => Response.json({ error }, { status });
-
 /**
  * `output` is the shape of the answer; it defaults to the short Insight. Any
  * other schema must be a JSON-Schema-friendly object (no refinements).
@@ -78,114 +75,21 @@ export async function insightResponse<T>(
   if (!parsed.success) return fail("That summary looks incomplete.", 400);
 
   // On Vercel the keys come from the project's environment variables.
-  // Gemini is used when GEMINI_API_KEY is set; otherwise Claude.
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (!geminiKey && !process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
-    return fail("AI insights aren't set up yet (add GEMINI_API_KEY or ANTHROPIC_API_KEY).", 503);
-  }
+  const providers = configuredProviders();
+  if (!providers.gemini && !providers.claude) return notSetUp();
   try {
     if (!(await allow(supabase, userId))) return fail("That's a lot of questions for one hour. Try again a little later.", 429);
-  } catch {
+  } catch (error) {
+    reportFailure(error, { area: "ask-dovie", step: "rate-limit" });
     return fail("Couldn't check your request just now. Please try again.", 503);
   }
 
-  const instructions = `${system}\n\n${SHARED_RULES}`;
-  const payload = JSON.stringify(parsed.data);
-  if (geminiKey) return askGemini(geminiKey, instructions, payload, output);
+  const response = await askModel(`${system}
 
-  try {
-    const client = new Anthropic();
-    const response = await client.beta.messages.parse({
-      model: "claude-opus-5-5",
-      max_tokens: 16000,
-      // Server-side fallback: if a safety classifier declines, the API retries
-      // on Anthropic's recommended model for that category.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "low", format: betaZodOutputFormat(output) },
-      system: instructions,
-      messages: [{ role: "user", content: payload }],
-    });
-
-    if (response.stop_reason === "refusal" || !response.parsed_output) {
-      return fail("Dovie couldn't read this just now. Please try again.", 502);
-    }
-    return Response.json(response.parsed_output);
-  } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError) {
-      return fail("AI insights aren't set up correctly (check ANTHROPIC_API_KEY).", 503);
-    }
-    if (error instanceof Anthropic.RateLimitError) return fail("Dovie is a little busy. Try again in a minute.", 429);
-    if (error instanceof Anthropic.APIError) return fail("Dovie couldn't reach its AI right now.", 502);
-    throw error;
+${SHARED_RULES}`, JSON.stringify(parsed.data), output);
+  // Only the status is reported, never the summary or the reply.
+  if (response.status >= 500) {
+    reportFailure(new Error("Ask Dovie could not get an answer"), { area: "ask-dovie", step: "model", status: String(response.status) });
   }
-}
-
-// Gemini's structured output takes plain JSON Schema; "$schema" isn't one of
-// the keywords it accepts, so it is dropped.
-function geminiSchema(output: z.ZodType): Record<string, unknown> {
-  const schema: Record<string, unknown> = { ...z.toJSONSchema(output) };
-  delete schema.$schema;
-  return schema;
-}
-
-// Tried in order: the configured model, then fallbacks for when it is
-// overloaded (Google returns 503 "high demand") or unavailable. Only the
-// "-latest" aliases are used, because Google retires pinned versions
-// (gemini-2.5-flash now returns 404); Flash-Lite usually has spare capacity.
-const GEMINI_FALLBACKS = ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"];
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-// Logs Google's status and message (never the key) so failures can be
-// diagnosed from the Vercel runtime logs.
-function logGemini(model: string, what: string) {
-  console.error(`[ask-dovie] gemini ${model}: ${what.slice(0, 300)}`);
-}
-
-async function askGemini(apiKey: string, instructions: string, payload: string, output: z.ZodType): Promise<Response> {
-  const ai = new GoogleGenAI({ apiKey });
-  const models = [...new Set([process.env.GEMINI_MODEL ?? GEMINI_FALLBACKS[0], ...GEMINI_FALLBACKS])];
-  let rateLimited = false;
-
-  for (const model of models) {
-    // Two attempts per model: Google's "overloaded" errors are usually brief.
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents: payload,
-          config: {
-            systemInstruction: instructions,
-            responseMimeType: "application/json",
-            responseJsonSchema: geminiSchema(output),
-          },
-        });
-        // No text means the answer was blocked or empty; malformed JSON is treated the same.
-        let json: unknown = null;
-        try {
-          json = JSON.parse(response.text ?? "null");
-        } catch {
-          json = null;
-        }
-        const answer = output.safeParse(json);
-        if (answer.success) return Response.json(answer.data);
-        logGemini(model, `unusable reply (finish: ${response.candidates?.[0]?.finishReason ?? "none"})`);
-        break; // try the next model
-      } catch (error) {
-        const status = error instanceof ApiError ? error.status : 0;
-        logGemini(model, `${status || "network"} ${error instanceof Error ? error.message : String(error)}`);
-        if (status === 400 || status === 401 || status === 403) {
-          return fail("AI insights aren't set up correctly (check GEMINI_API_KEY).", 503);
-        }
-        if (status === 429) rateLimited = true;
-        if ((status >= 500 || status === 0) && attempt === 1) {
-          await sleep(1500);
-          continue; // retry the same model once
-        }
-        break; // 404 (model unavailable), 429 or a repeated failure: next model
-      }
-    }
-  }
-  if (rateLimited) return fail("Dovie is a little busy. Try again in a minute.", 429);
-  return fail("Dovie couldn't reach its AI right now.", 502);
+  return response;
 }

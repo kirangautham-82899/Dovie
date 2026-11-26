@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AdviceNote } from "@/components/advice-note";
 import { Button } from "@/components/ui/button";
 import { Slip } from "@/components/notebook";
 import { ErrorNote } from "@/components/page-header";
@@ -47,6 +48,7 @@ export function CycleTab({ today }: { today: string }) {
   return (
     <Slip className="p-5 sm:p-6">
       <Heading title="Period tracker" aside="private to you" />
+      <AdviceNote className="mt-2">Not medical advice or contraception. Dates are estimates from what you log; see a doctor about anything that worries you.</AdviceNote>
       {error && (
         <div className="mt-3">
           <ErrorNote message={error} />
@@ -166,7 +168,7 @@ export function CycleTab({ today }: { today: string }) {
               }}
             />
           </div>
-          <p className="text-xs text-muted-foreground">Tap a day to log it. Estimates come only from what you log. Dovie is for tracking and is not medical advice or contraception.</p>
+          <p className="text-xs text-muted-foreground">Tap a day to log it. Estimates come only from what you log.</p>
         </div>
       </div>
     </Slip>

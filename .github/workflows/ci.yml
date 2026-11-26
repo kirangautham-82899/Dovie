@@ -20,14 +20,67 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
       - run: npm ci
       - run: npm run lint
-      # Offline checks for the pure logic (forecasts, predictions, tracker, mood × money).
-      - run: npm run test:forecast
-      - run: npm run test:predict
-      - run: npm run test:tracker
-      - run: npm run test:mood-money
-      - run: npm run test:daily-insight
+      # Offline checks: pure logic, error-report scrubbing, Ask Dovie against a
+      # stubbed network, and the reminder emails.
+      - run: npm run test:offline
       - run: npm run build
         env:
           # Placeholders: the build does not contact Supabase.
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+      # After the build, which generates the route types.
+      - run: npx tsc --noEmit
+
+  # Database and end-to-end tests against a separate TEST Supabase project
+  # (docs/testing.md). Skipped, with a warning, until its secrets are added.
+  supabase:
+    runs-on: ubuntu-latest
+    needs: web
+    # One run at a time: they share the test project and its sign-up limits.
+    concurrency:
+      group: supabase-test-project
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: apps/web
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Check for the test project
+        id: project
+        working-directory: .
+        run: |
+          if [ -z "$E2E_SUPABASE_URL" ] || [ -z "$E2E_SUPABASE_ANON_KEY" ]; then
+            echo "::warning::Database and end-to-end tests did NOT run: add the E2E_SUPABASE_URL and E2E_SUPABASE_ANON_KEY secrets (docs/testing.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          elif [[ "$E2E_SUPABASE_URL" == *lvzbonyyvieaylwqwukv* ]]; then
+            echo "::error::E2E_SUPABASE_URL is the live project. Use a separate test project."
+            exit 1
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.project.outputs.ready == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.project.outputs.ready == 'true'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+        if: steps.project.outputs.ready == 'true'
+      - run: npm run test:db
+        if: steps.project.outputs.ready == 'true'
+      - run: npx playwright install --with-deps chromium
+        if: steps.project.outputs.ready == 'true'
+      - run: npm run test:e2e
+        if: steps.project.outputs.ready == 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure() && steps.project.outputs.ready == 'true'
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7

@@ -1,44 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, CalendarClock, Check, PiggyBank, Plus, ReceiptText, Target, Trash2, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CalendarClock, Check, PiggyBank, Plus, ReceiptText, Target, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Slip, Sticky, StickyValue } from "@/components/notebook";
-import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/modal";
-import { ChoicePills, Field, selectClass } from "@/components/field";
+import { ChoicePills } from "@/components/field";
 import { EmptyState, ErrorNote, PageHeader, SectionTitle } from "@/components/page-header";
-import { EXPENSE_CATEGORIES, INCOME_SOURCES, formatPaise, rupeesToPaise } from "@/lib/money";
-import { addDays, daysBetween, formatDate, relativeDay } from "@/lib/dates";
+import { formatPaise } from "@/lib/money";
+import { daysBetween, formatDate, relativeDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import type { Recurrence } from "./api";
 import { useMoney } from "./use-money";
-import { FORECAST_STATUS, MoneyForecastCard } from "./money-forecast";
+import { MoneyForecastCard } from "./money-forecast";
 import { forecastMoney } from "./forecast";
 import { SavingsCoach } from "./savings-coach";
 import { MoodMoneyCard } from "./mood-money-card";
 import { expectedIncome } from "./savings";
-
-type Dialog = null | "income" | "expense" | "bill" | "budget" | "goal" | { savingsFor: string; title: string };
-
-const RECURRENCE_LABEL: Record<Recurrence, string> = {
-  monthly: "Monthly",
-  weekly: "Weekly",
-  yearly: "Yearly",
-  once: "Just once",
-};
-
-function Progress({ value, over = false, muted = false }: { value: number; over?: boolean; muted?: boolean }) {
-  return (
-    <div className="h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
-      <div
-        className={cn("h-full rounded-full transition-all", over ? "bg-destructive/70" : muted ? "bg-primary/40" : "bg-primary")}
-        style={{ width: `${Math.min(100, Math.max(0, value * 100))}%` }}
-      />
-    </div>
-  );
-}
+import { type Dialog, LEDGER_FILTERS, type LedgerFilter, type LedgerRow, PLAN_ACTIONS, Progress, RECURRENCE_LABEL, RemoveButton, StatusPill, dense, whole } from "./money-parts";
+import { AmountForm, BillForm, BudgetForm, ExpenseForm, GoalForm, IncomeForm } from "./money-forms";
 
 /** Header copy, shared with the loading skeleton so the page doesn't jump. */
 export const MONEY_HEADER = {
@@ -46,48 +26,6 @@ export const MONEY_HEADER = {
   title: "Know where you",
   accent: "stand.",
 };
-
-/** Cards on the money page are a little tighter than the default. */
-const dense = "p-4 sm:p-5";
-
-/** Sticky notes show whole rupees; the lists below keep the paise. */
-const whole = (paise: number) => formatPaise(Math.round(paise / 100) * 100);
-
-const LEDGER_FILTERS = [
-  { value: "all", label: "All" },
-  { value: "in", label: "In" },
-  { value: "out", label: "Out" },
-] as const;
-type LedgerFilter = (typeof LEDGER_FILTERS)[number]["value"];
-
-type LedgerRow = { id: string; kind: "in" | "out"; title: string; tag: string; date: string; amount: number };
-
-function StatusPill({ status }: { status: keyof typeof FORECAST_STATUS }) {
-  const s = FORECAST_STATUS[status];
-  return <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold", s.className)}>{s.label}</span>;
-}
-
-/** Planning actions, grouped apart from the everyday in/out buttons. */
-const PLAN_ACTIONS = [
-  { dialog: "bill", label: "Bill", icon: CalendarClock },
-  { dialog: "budget", label: "Budget", icon: Target },
-  { dialog: "goal", label: "Goal", icon: PiggyBank },
-] as const;
-
-/** Quiet until the row is hovered or focused; always shown on touch screens, which can't hover. */
-function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className="-mr-1 flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/70 transition outline-none group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 focus-visible:ring-3 focus-visible:ring-destructive/25 [@media(hover:hover)]:opacity-0"
-    >
-      <Trash2 className="size-3.5" />
-    </button>
-  );
-}
 
 export function MoneyBoard({ today }: { today: string }) {
   const [error, setError] = useState<string | null>(null);
@@ -514,261 +452,5 @@ export function MoneyBoard({ today }: { today: string }) {
         />
       </Modal>
     </>
-  );
-}
-
-function useAmount() {
-  const [raw, setRaw] = useState("");
-  return { raw, setRaw, paise: rupeesToPaise(raw) };
-}
-
-function AmountInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="relative">
-      <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">₹</span>
-      <Input
-        inputMode="decimal"
-        placeholder="0"
-        className="pl-7"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </div>
-  );
-}
-
-function ExpenseForm({
-  today,
-  pending,
-  onSave,
-}: {
-  today: string;
-  pending?: boolean;
-  onSave: (v: { amount_paise: number; category: string; note: string; spent_on: string }) => void;
-}) {
-  const amount = useAmount();
-  const [note, setNote] = useState("");
-  const [category, setCategory] = useState<string>("Everyday");
-  const [date, setDate] = useState(today);
-  return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (amount.paise) onSave({ amount_paise: amount.paise, category, note, spent_on: date });
-      }}
-    >
-      <Field label="What was it?">
-        <Input placeholder="Lunch with a friend" maxLength={120} value={note} onChange={(e) => setNote(e.target.value)} />
-      </Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Amount">
-          <AmountInput value={amount.raw} onChange={amount.setRaw} />
-        </Field>
-        <Field label="Category">
-          <select className={selectClass} value={category} onChange={(e) => setCategory(e.target.value)}>
-            {EXPENSE_CATEGORIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </Field>
-      </div>
-      <Field label="When">
-        <Input type="date" max={today} value={date} onChange={(e) => setDate(e.target.value)} />
-      </Field>
-      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!amount.paise || !date}>
-        Add expense
-      </Button>
-    </form>
-  );
-}
-
-function IncomeForm({
-  today,
-  pending,
-  onSave,
-}: {
-  today: string;
-  pending?: boolean;
-  onSave: (v: { amount_paise: number; source: string; note: string; received_on: string }) => void;
-}) {
-  const amount = useAmount();
-  const [note, setNote] = useState("");
-  const [source, setSource] = useState<string>("Salary");
-  const [date, setDate] = useState(today);
-  return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (amount.paise) onSave({ amount_paise: amount.paise, source, note, received_on: date });
-      }}
-    >
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Amount">
-          <AmountInput value={amount.raw} onChange={amount.setRaw} />
-        </Field>
-        <Field label="From">
-          <select className={selectClass} value={source} onChange={(e) => setSource(e.target.value)}>
-            {INCOME_SOURCES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </Field>
-      </div>
-      <Field label="Note" hint="Optional">
-        <Input placeholder="October salary" maxLength={120} value={note} onChange={(e) => setNote(e.target.value)} />
-      </Field>
-      <Field label="Received on">
-        <Input type="date" max={today} value={date} onChange={(e) => setDate(e.target.value)} />
-      </Field>
-      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!amount.paise || !date}>
-        Add income
-      </Button>
-    </form>
-  );
-}
-
-function BillForm({
-  today,
-  pending,
-  onSave,
-}: {
-  today: string;
-  pending?: boolean;
-  onSave: (v: { title: string; amount_paise: number | null; due_date: string; recurrence: Recurrence }) => void;
-}) {
-  const amount = useAmount();
-  const [title, setTitle] = useState("");
-  const [due, setDue] = useState(addDays(today, 7));
-  const [recurrence, setRecurrence] = useState<Recurrence>("monthly");
-  return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (title.trim() && due) onSave({ title, amount_paise: amount.paise, due_date: due, recurrence });
-      }}
-    >
-      <Field label="Bill name">
-        <Input placeholder="Internet" maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} />
-      </Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Amount" hint="Optional">
-          <AmountInput value={amount.raw} onChange={amount.setRaw} />
-        </Field>
-        <Field label="Due date">
-          <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
-        </Field>
-      </div>
-      <Field label="Repeats">
-        <select className={selectClass} value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>
-          {(Object.keys(RECURRENCE_LABEL) as Recurrence[]).map((r) => (
-            <option key={r} value={r}>
-              {RECURRENCE_LABEL[r]}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!title.trim() || !due || (amount.raw !== "" && !amount.paise)}>
-        Add bill
-      </Button>
-    </form>
-  );
-}
-
-function BudgetForm({ pending, onSave }: { pending?: boolean; onSave: (v: { category: string; limit: number }) => void }) {
-  const amount = useAmount();
-  const [category, setCategory] = useState<string>("Food");
-  return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (amount.paise) onSave({ category, limit: amount.paise });
-      }}
-    >
-      <Field label="Category">
-        <select className={selectClass} value={category} onChange={(e) => setCategory(e.target.value)}>
-          {EXPENSE_CATEGORIES.map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
-      </Field>
-      <Field label="Monthly limit" hint="Setting a category again replaces its limit.">
-        <AmountInput value={amount.raw} onChange={amount.setRaw} />
-      </Field>
-      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!amount.paise}>
-        Set budget
-      </Button>
-    </form>
-  );
-}
-
-function GoalForm({
-  today,
-  pending,
-  onSave,
-}: {
-  today: string;
-  pending?: boolean;
-  onSave: (v: { title: string; target_paise: number; target_date: string | null }) => void;
-}) {
-  const amount = useAmount();
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (title.trim() && amount.paise) onSave({ title, target_paise: amount.paise, target_date: date || null });
-      }}
-    >
-      <Field label="What are you saving for?">
-        <Input placeholder="A weekend away" maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} />
-      </Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Target amount">
-          <AmountInput value={amount.raw} onChange={amount.setRaw} />
-        </Field>
-        <Field label="By when" hint="Optional">
-          <Input type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
-      </div>
-      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!title.trim() || !amount.paise}>
-        Make goal
-      </Button>
-    </form>
-  );
-}
-
-function AmountForm({
-  label,
-  submit,
-  pending,
-  onSave,
-}: {
-  label: string;
-  submit: string;
-  pending?: boolean;
-  onSave: (paise: number) => void;
-}) {
-  const amount = useAmount();
-  return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (amount.paise) onSave(amount.paise);
-      }}
-    >
-      <Field label={label}>
-        <AmountInput value={amount.raw} onChange={amount.setRaw} />
-      </Field>
-      <Button type="submit" size="lg" className="w-full" loading={pending} disabled={!amount.paise}>
-        {submit}
-      </Button>
-    </form>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { AdviceNote } from "@/components/advice-note";
 import { Button } from "@/components/ui/button";
 import { Slip } from "@/components/notebook";
 import { ErrorNote } from "@/components/page-header";
@@ -41,6 +42,7 @@ export function DietTab({ today }: { today: string }) {
           </Button>
         </nav>
       </div>
+      <AdviceNote className="mt-3">A food diary, not medical or nutrition advice. For diet or health concerns, talk to a doctor or dietitian.</AdviceNote>
 
       {error && (
         <div className="mt-3">

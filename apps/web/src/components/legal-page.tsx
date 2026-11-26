@@ -1,5 +1,17 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { SUPPORT_EMAIL } from "@/lib/site";
+
+/** The support and grievance address as a mailto link, or the fallback wording until one is set. */
+export function Contact({ fallback }: { fallback: string }) {
+  return SUPPORT_EMAIL ? (
+    <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-foreground underline">
+      {SUPPORT_EMAIL}
+    </a>
+  ) : (
+    <>{fallback}</>
+  );
+}
 
 export function LegalPage({
   eyebrow,

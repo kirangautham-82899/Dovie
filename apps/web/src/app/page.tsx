@@ -66,7 +66,7 @@ const FAQ = [
 ];
 
 const PRIVACY = [
-  { icon: BookLock, title: "A private journal", body: "Only you can read it when signed in. Never used for insights." },
+  { icon: BookLock, title: "A private journal", body: "Opens with your sign-in. Never used for insights. Not end-to-end encrypted." },
   { icon: HandCoins, title: "No bank access", body: "Add money by hand. No cards, SMS or statements, ever." },
   { icon: EyeOff, title: "No selling, no ads", body: "Insights use numbers and completions, never your words." },
   { icon: Download, title: "Export or erase", body: "Download everything as JSON, or delete your account in one step." },
@@ -353,7 +353,7 @@ export default function LandingPage() {
               <div className={PANEL}>
                 <p className="truncate font-serif text-sm text-muted-foreground italic">Slow morning. Good tea. Felt calm…</p>
                 <p className="mt-2.5 flex items-center gap-1.5 text-xs">
-                  <Lock className="size-3.5 text-primary" /> Only you can read it
+                  <Lock className="size-3.5 text-primary" /> Behind your sign-in
                 </p>
               </div>
             </Feature>

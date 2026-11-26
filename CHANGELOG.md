@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-11-26
+
+Work from the release-readiness report of 23 November.
+
+### Monitoring and privacy
+- Error reports go to Sentry once `NEXT_PUBLIC_SENTRY_DSN` is set, with personal data removed first
+  (`lib/monitoring/scrub.ts`, `npm run test:scrub`). Cookieless Vercel Web Analytics loads on Vercel.
+- "Not medical / not financial advice" notes on Period, Mental health, Diet, Fitness and the Savings coach,
+  and a new section in the terms.
+- The privacy notice covers error reports, analytics and email reminders. New draft page `/data-requests`.
+- Journal wording no longer says "only you can read it".
+
+### Ask Dovie
+- If Gemini fails and a Claude key is set, Claude answers. Cut-off or unreadable Claude replies now give a
+  friendly message. Covered offline by `npm run test:ai`.
+
+### Email bill reminders (off until set up)
+- Migration `20261126000000_bill_email_reminders.sql`, the `bill-reminders` Edge Function and a Settings
+  switch shown when `NEXT_PUBLIC_EMAIL_REMINDERS=1`. Setup: `docs/bill-reminders.md`.
+
+### Quality
+- A Playwright journey and CI jobs for it and the database tests, which run once a test Supabase project is
+  configured (`docs/testing.md`). CI also type-checks and runs all offline tests.
+- Readable text shades for the pastel palette in light mode, checked by `npm run test:contrast`.
+- The goals, settings, calendar, fitness and money screens are split into smaller files.
+- `docs/deploy.md` is rewritten for the current app. New: real-phone checklist and a draft data-request and
+  breach process.
+
 ## 2026-11-01
 
 ### Offline

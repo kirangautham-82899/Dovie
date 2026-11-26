@@ -1,5 +1,5 @@
-import { LegalPage } from "@/components/legal-page";
-import { SUPPORT_EMAIL } from "@/lib/site";
+import Link from "next/link";
+import { Contact, LegalPage } from "@/components/legal-page";
 
 export const metadata = {
   title: "Privacy",
@@ -7,17 +7,7 @@ export const metadata = {
   alternates: { canonical: "/privacy" },
 };
 
-const UPDATED = "27 October 2026";
-
-function Contact({ fallback }: { fallback: string }) {
-  return SUPPORT_EMAIL ? (
-    <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-foreground underline">
-      {SUPPORT_EMAIL}
-    </a>
-  ) : (
-    <>{fallback}</>
-  );
-}
+const UPDATED = "26 November 2026";
 
 export default function PrivacyPage() {
   return (
@@ -76,6 +66,34 @@ export default function PrivacyPage() {
           ),
         },
         {
+          heading: "Error reports and visitor counts",
+          body: (
+            <>
+              <p>
+                When something breaks, Dovie may send an error report to Sentry: the kind of error, where in the code
+                it happened, the page address without its query string, and your browser and device type. Before a report
+                is sent, Dovie removes your account details, cookies and what was in the request, and blanks quoted text,
+                email addresses and long numbers in the error message. It does not record your screen.
+              </p>
+              <p>
+                To see which pages are used, Dovie uses Vercel Web Analytics. It sets no cookies and does not follow you
+                across other sites. It counts page views with the page address (without its query string), the referring
+                site, country, browser and device type.
+              </p>
+            </>
+          ),
+        },
+        {
+          heading: "Email reminders",
+          body: (
+            <p>
+              If email bill reminders are offered and you turn them on in Settings, Dovie sends your sign-in address, bill
+              names, amounts and due dates to Resend, an email service, to deliver them. They are off until you turn them
+              on, and you can turn them off at any time.
+            </p>
+          ),
+        },
+        {
           heading: "Where your data lives",
           body: (
             <>
@@ -85,8 +103,9 @@ export default function PrivacyPage() {
                 encrypted in transit (HTTPS) and at rest.
               </p>
               <p>
-                The app is served by Vercel. Supabase, Vercel, Google (for Google sign-in and Gemini) and Anthropic act as
-                service providers on Dovie&apos;s behalf; their servers may be outside India.
+                The app is served by Vercel. Supabase, Vercel, Google (for Google sign-in and Gemini), Anthropic, Sentry
+                (error reports) and Resend (email reminders) act as service providers on Dovie&apos;s behalf; their servers
+                may be outside India.
               </p>
             </>
           ),
@@ -121,7 +140,11 @@ export default function PrivacyPage() {
             <p>
               Dovie aims to follow India&apos;s Digital Personal Data Protection Act, 2023: you can access, correct and
               erase your data, and withdraw consent by deleting your account. For questions, requests or grievances,
-              contact <Contact fallback="the grievance contact, which will be published before public launch" />.
+              contact <Contact fallback="the grievance contact, which will be published before public launch" />. See{" "}
+              <Link href="/data-requests" className="font-semibold text-foreground underline">
+                how data requests and data breaches are handled
+              </Link>
+              .
             </p>
           ),
         },

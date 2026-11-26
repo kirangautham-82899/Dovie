@@ -12,10 +12,20 @@ const supabase = (() => {
 })();
 const supabaseWs = supabase.replace(/^https:/, "wss:");
 
+// Error reports go to the Sentry project named in the DSN, when there is one.
+const sentry = (() => {
+  try {
+    return ` ${new URL(process.env.NEXT_PUBLIC_SENTRY_DSN ?? "").origin}`;
+  } catch {
+    return "";
+  }
+})();
+
 // Next.js inlines small bootstrap scripts, so scripts need 'unsafe-inline'
 // (and 'unsafe-eval' for dev tooling). What stops an injected script from
 // doing harm is everything else: it can't load code or send data anywhere
-// but here and Supabase, can't be framed and can't post forms elsewhere.
+// but here, Supabase and error reports, can't be framed and can't post forms
+// elsewhere.
 // vercel.live is Vercel's preview toolbar; it never runs in production.
 const csp = [
   "default-src 'self'",
@@ -23,7 +33,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://vercel.live https://vercel.com",
   "font-src 'self' data:",
-  `connect-src 'self' ${supabase} ${supabaseWs} https://vercel.live wss://ws-us3.pusher.com${isDev ? " ws:" : ""}`,
+  `connect-src 'self' ${supabase} ${supabaseWs} https://vercel.live wss://ws-us3.pusher.com${sentry}${isDev ? " ws:" : ""}`,
   "frame-src https://vercel.live",
   "worker-src 'self' blob:",
   "manifest-src 'self'",

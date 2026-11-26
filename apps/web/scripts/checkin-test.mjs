@@ -71,7 +71,7 @@ check(
 
 // ---------- score: tasks only ----------
 const task = async (row) => must(await a.client.from("tasks").insert({ due_date: T, ...row }).select().single(), "task");
-const p1 = await task({ title: "P1 done", is_priority: true, completed_at: done() });
+await task({ title: "P1 done", is_priority: true, completed_at: done() });
 const p2 = await task({ title: "P2 open", is_priority: true });
 await task({ title: "T1 done", completed_at: done() });
 await task({ title: "T2 done", completed_at: done() });

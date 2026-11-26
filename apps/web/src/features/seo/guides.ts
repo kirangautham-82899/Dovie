@@ -366,7 +366,7 @@ export const GUIDES: Record<GuideSlug, Guide> = {
     name: "Private journal",
     title: "Private Journal App with Daily Prompts | Dovie",
     description:
-      "Write in a private dot-grid journal with daily prompts and a gratitude line. Only you can read it when signed in, and it is never used for ads or insights. Free on any device.",
+      "Write in a private dot-grid journal with daily prompts and a gratitude line. It opens with your sign-in and is never used for ads or insights. Free on any device.",
     keywords: [
       "private journal app",
       "dot grid journal",
@@ -383,7 +383,7 @@ export const GUIDES: Record<GuideSlug, Guide> = {
     intro:
       "Write freely on a dot-grid page that is yours alone. Gentle prompts and a gratitude line help on the days you don't know where to start.",
     tint: "bg-sky",
-    highlights: ["A dot-grid notebook page", "Only you can read it when signed in", "Daily prompts and gratitude", "Never used for ads or insights"],
+    highlights: ["A dot-grid notebook page", "Opens only with your sign-in", "Daily prompts and gratitude", "Never used for ads or insights"],
     sections: [
       {
         heading: "A page for every day",

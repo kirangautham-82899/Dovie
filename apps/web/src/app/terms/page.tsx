@@ -7,7 +7,7 @@ export const metadata = {
   alternates: { canonical: "/terms" },
 };
 
-const UPDATED = "27 October 2026";
+const UPDATED = "26 November 2026";
 
 export default function TermsPage() {
   return (
@@ -33,6 +33,17 @@ export default function TermsPage() {
               Dovie helps you track things. Forecasts, predictions, savings tips and AI insights are estimates from your
               own entries, not medical, mental-health or financial advice. For those, please talk to a qualified
               professional.
+            </p>
+          ),
+        },
+        {
+          heading: "Health and money features",
+          body: (
+            <p>
+              The period tracker is not a method of contraception and cannot diagnose anything. Mind check-ins and
+              breathing exercises are not therapy or crisis care: if you might hurt yourself, call your local emergency
+              number, or Tele-MANAS on 14416 in India. The diet diary and fitness tracker do not tell you what is safe to
+              eat or how hard to train. The savings coach and forecasts are not investment, tax, credit or loan advice.
             </p>
           ),
         },

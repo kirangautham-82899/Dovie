@@ -31,6 +31,18 @@ export async function updateProfile(id: string, values: ProfileUpdate) {
   if (error) throw new Error(error.message);
 }
 
+/** Kept out of the profile query so the app still loads before its migration has run. */
+export async function fetchEmailReminders(): Promise<boolean> {
+  const { data, error } = await createClient().from("profiles").select("email_reminders_enabled").single();
+  if (error) throw new Error(error.message);
+  return Boolean(data.email_reminders_enabled);
+}
+
+export async function setEmailReminders(id: string, on: boolean) {
+  const { error } = await createClient().from("profiles").update({ email_reminders_enabled: on }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 const EXPORT_TABLES = [
   "profiles",
   "tasks",

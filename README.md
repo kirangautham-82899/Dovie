@@ -94,7 +94,7 @@ Dovie's predictions run **in the browser on your own entries**: free, instant an
 ## 🛡️ Privacy & security
 
 - **Row-level security** on every table: each account can only ever reach its own rows, enforced in Postgres.
-- **A private journal**: pages are plain text on the account, readable only by their owner (row-level security) and never used for insights. There is no passphrase. The earlier end-to-end encrypted design is kept for reference in [`docs/crypto-spec.md`](docs/crypto-spec.md).
+- **A private journal**: pages are plain text on the account, readable only by their owner (row-level security) and never used for insights. They are not end-to-end encrypted. There is no passphrase. The earlier end-to-end encrypted design is kept for reference in [`docs/crypto-spec.md`](docs/crypto-spec.md).
 - **No bank, card or SMS access.** Money is entered by hand.
 - **Your data, your call:** one-click JSON export, clear-everything and full account deletion (`delete_my_account()` cascades through every table).
 - **Server-only secrets:** the Supabase service-role key is never used, and the Anthropic key never reaches the browser.
@@ -169,6 +169,9 @@ Copy `apps/web/.env.example` to `apps/web/.env` and fill it in:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase → Project Settings → API Keys (publishable key) |
 | `GEMINI_API_KEY` | optional | [aistudio.google.com](https://aistudio.google.com/apikey). Enables **Ask Dovie** with Gemini (used first when set). Server-only. |
 | `ANTHROPIC_API_KEY` | optional | [console.anthropic.com](https://console.anthropic.com). Enables **Ask Dovie**. Server-only. |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | before launch | The support and grievance inbox shown on the legal pages |
+| `NEXT_PUBLIC_SENTRY_DSN` | before launch | Error reports with personal text removed (see [`docs/deploy.md`](docs/deploy.md#4-monitoring)) |
+| `NEXT_PUBLIC_EMAIL_REMINDERS` | optional | `1` once [email bill reminders](docs/bill-reminders.md) are set up |
 | `NEXT_PUBLIC_SITE_URL` | optional | Your custom domain as a full URL (`https://…`), for canonical URLs and share cards |
 | `GOOGLE_SITE_VERIFICATION` / `BING_SITE_VERIFICATION` | optional | Search engine meta-tag codes (see [SEO](#-seo--search-engines)) |
 
@@ -196,13 +199,15 @@ npm run lint
 |---|---|---|
 | `npm run test:forecast` | Month-end spending forecast maths | No |
 | `npm run test:predict` | Next-week prediction maths | No |
+| `npm run test:offline` | All the offline checks, including error-report scrubbing, Ask Dovie (stubbed), reminder emails and colour contrast | No |
 | `npm run test:rls` | Two users can't see each other's data | Yes |
 | `npm run test:tasks` / `test:habits` / `test:checkin` | Priorities, carry-over, streaks, daily score | Yes |
 | `npm run test:life` | Money, journal storage, calendar, weekly review, clear data, delete account | Yes |
+| `npm run test:e2e` | Sign-up to account deletion in a real browser (Playwright) | Yes |
 
-> Supabase-backed tests create throwaway `@example.com` users and need **Confirm email** switched off while they run.
+> Supabase-backed tests create throwaway `@example.com` users. Run them against a separate **test** project with **Confirm email** switched off, never the live one. See [`docs/testing.md`](docs/testing.md).
 
-CI runs lint and a production build on every push and pull request.
+CI runs lint, the offline tests, a production build and a type check on pull requests and pushes to `main`. The database and end-to-end tests run once the test project's secrets are added.
 
 ---
 
